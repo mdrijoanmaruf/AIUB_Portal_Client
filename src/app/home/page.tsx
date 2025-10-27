@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import Navbar from '@/components/Navbar/Navbar'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'
 
@@ -16,7 +17,7 @@ interface UserData {
     date: string
     classes: Array<{
       courseName: string
-      time: string
+      time: string[]
       room: string
     }>
   }>
@@ -34,6 +35,13 @@ interface UserData {
         text: string
       }>
       result: string
+      timeInfo?: Array<{
+        start: string
+        end: string
+        room: string
+      }>
+      credits?: string
+      status?: string
     }>
   }
 }
@@ -83,7 +91,7 @@ const Home = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-green-50 via-white to-blue-50">
+      <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-green-50 via-white to-blue-50">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
           <p className="text-gray-600">Loading your data...</p>
@@ -94,7 +102,7 @@ const Home = () => {
 
   if (error || !userData) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-red-50 via-white to-orange-50">
+      <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-red-50 via-white to-orange-50">
         <div className="text-center">
           <svg className="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -109,11 +117,12 @@ const Home = () => {
   const currentSemester = userData.registration.semesters.find(s => s.selected)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50">
+      <Navbar />
+      <div className="max-w-7xl mx-auto p-4 md:p-8">
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 mb-6">
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 md:px-8 py-6">
+          <div className="bg-linear-to-r from-blue-600 to-purple-600 px-6 md:px-8 py-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-white">
@@ -170,7 +179,7 @@ const Home = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 font-medium">Total Courses</p>
-                  <p className="text-3xl font-bold text-blue-600">{userData.registration.courses.length}</p>
+                  <p className="text-3xl font-bold text-blue-600">{userData.registration.courses.filter(c => c.status !== 'Dropped').length}</p>
                 </div>
                 <svg className="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -210,7 +219,7 @@ const Home = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Class Schedule Section */}
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
+            <div className="bg-linear-to-r from-blue-500 to-blue-600 px-6 py-4">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -233,12 +242,15 @@ const Home = () => {
                               <>
                                 <p className="font-semibold text-blue-700">{classItem.courseName}</p>
                                 <div className="flex flex-wrap gap-4 mt-2 text-sm text-gray-600">
-                                  {classItem.time && (
+                                  {classItem.time && classItem.time.length > 0 && (
                                     <div className="flex items-center gap-1">
                                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                       </svg>
-                                      {classItem.time}
+                                      {classItem.time.length === 2
+                                        ? `${classItem.time[0]} - ${classItem.time[1]}`
+                                        : classItem.time[0]
+                                      }
                                     </div>
                                   )}
                                   {classItem.room && (
@@ -266,7 +278,7 @@ const Home = () => {
 
           {/* Registered Courses Section */}
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-            <div className="bg-gradient-to-r from-purple-500 to-purple-600 px-6 py-4">
+            <div className="bg-linear-to-r from-purple-500 to-purple-600 px-6 py-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -278,7 +290,8 @@ const Home = () => {
             </div>
             <div className="p-6 max-h-[600px] overflow-y-auto">
               <div className="space-y-4">
-                {userData.registration.courses.map((course, index) => (
+                {userData.registration?.courses && userData.registration.courses.length > 0 ? (
+                  userData.registration.courses.map((course, index) => (
                   <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
@@ -287,10 +300,43 @@ const Home = () => {
                             {course.courseCode}
                           </span>
                           <span className="text-xs text-gray-500">{course.sectionStatus}</span>
+                          {course.status && (
+                            <span className={`text-xs font-medium px-2 py-1 rounded ${
+                              course.status === 'Active' 
+                                ? 'bg-green-100 text-green-700' 
+                                : 'bg-red-100 text-red-700'
+                            }`}>
+                              {course.status}
+                            </span>
+                          )}
                         </div>
                         <h3 className="font-semibold text-gray-800">{course.courseName}</h3>
+                        {course.credits && (
+                          <p className="text-sm text-gray-600 mt-1">
+                            Credits: <span className="font-medium">{course.credits}</span>
+                          </p>
+                        )}
                       </div>
                     </div>
+                    
+                    {/* Time Information */}
+                    {course.timeInfo && course.timeInfo.length > 0 && (
+                      <div className="mt-3 mb-3">
+                        <p className="text-sm font-medium text-gray-700 mb-2">Schedule:</p>
+                        <div className="space-y-1">
+                          {course.timeInfo.map((time, timeIndex) => (
+                            <div key={timeIndex} className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded">
+                              <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <span>{time.start} - {time.end}</span>
+                              <span className="text-gray-500">•</span>
+                              <span>Room: {time.room}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     
                     <div className="flex flex-wrap gap-2 mt-3">
                       {course.statusLabels && course.statusLabels.map((label, labelIndex) => (
@@ -309,7 +355,7 @@ const Home = () => {
                       ))}
                     </div>
 
-                    {course.result && (
+                    {course.result && course.result !== '-' && (
                       <div className="mt-3 pt-3 border-t border-gray-200">
                         <p className="text-sm text-gray-600">
                           Result: <span className="font-medium text-gray-800">{course.result}</span>
@@ -317,7 +363,15 @@ const Home = () => {
                       </div>
                     )}
                   </div>
-                ))}
+                ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <svg className="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    <p>No registered courses found</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -326,7 +380,7 @@ const Home = () => {
         {/* Semester Information */}
         {userData.registration.semesters && userData.registration.semesters.length > 0 && (
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 mt-6">
-            <div className="bg-gradient-to-r from-teal-500 to-teal-600 px-6 py-4">
+            <div className="bg-linear-to-r from-teal-500 to-teal-600 px-6 py-4">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />

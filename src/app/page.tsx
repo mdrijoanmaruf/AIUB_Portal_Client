@@ -109,8 +109,8 @@ export default function Home() {
     <div className="relative flex min-h-screen items-center justify-center bg-blue-50 p-4 overflow-hidden">
       {/* Animated Dotted Background */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgb(59,130,246,0.15)_1px,transparent_0)] bg-[length:40px_40px] animate-[moveGrid_20s_linear_infinite]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgb(37,99,235,0.1)_1px,transparent_0)] bg-[length:60px_60px] animate-[moveGrid_30s_linear_infinite_reverse]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgb(59,130,246,0.15)_1px,transparent_0)] bg-size-[40px_40px] animate-[moveGrid_20s_linear_infinite]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgb(37,99,235,0.1)_1px,transparent_0)] bg-size-[60px_60px] animate-[moveGrid_30s_linear_infinite_reverse]"></div>
       </div>
 
       {/* Floating Elements */}
