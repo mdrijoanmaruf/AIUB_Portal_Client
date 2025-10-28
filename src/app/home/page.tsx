@@ -526,120 +526,98 @@ const Home = () => {
           </div>
 
           {/* Registered Courses Section - SECOND */}
-          <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl overflow-hidden border border-gray-200/50">
-            <div className="relative bg-linear-to-r from-violet-500 via-purple-500 to-fuchsia-500 px-8 py-6">
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-gray-200/50">
+            <div className="relative bg-linear-to-r from-violet-500 via-purple-500 to-fuchsia-500 px-6 py-5">
               <div className="absolute top-0 left-0 w-32 h-32 bg-white/10 rounded-full -ml-16 -mt-16"></div>
-              <h2 className="relative z-10 text-2xl font-bold text-white flex items-center gap-3">
+              <h2 className="relative z-10 text-xl font-bold text-white flex items-center gap-3">
                 <div className="bg-white/30 backdrop-blur-sm p-2 rounded-xl">
-                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
                 </div>
                 Registered Courses
-                <span className="ml-auto text-sm font-normal text-violet-100 bg-white/10 px-4 py-2 rounded-full">
+                <span className="ml-auto text-sm font-normal text-violet-100 bg-white/10 px-3 py-1 rounded-full">
                   {userData.registration.courses.filter(c => c.status !== 'Dropped').length} Active
                 </span>
               </h2>
             </div>
-            <div className="p-8 max-h-[700px] overflow-y-auto custom-scrollbar">
-              <div className="space-y-5">
-                {userData.registration?.courses && userData.registration.courses.length > 0 ? (
-                  userData.registration.courses.map((course, index) => (
-                  <div key={index} className="bg-gray-50/80 backdrop-blur-sm border border-gray-200/50 rounded-2xl p-6 hover:border-purple-300/70 transition-all duration-300">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-3">
-                          <span className="bg-purple-100/80 text-purple-700 text-sm font-bold px-4 py-2 rounded-xl border border-purple-200/50">
-                            {course.courseCode}
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {userData.registration.courses.filter(c => c.status !== 'Dropped').slice(0, cardsToShow).map((course, index) => (
+                  <div key={index} className="bg-gray-50/80 backdrop-blur-sm border border-gray-200/50 rounded-xl overflow-hidden hover:border-purple-300/70 transition-all duration-300">
+                    <div className="bg-linear-to-r from-violet-50/80 to-purple-50/80 border-b border-violet-200/50 px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 bg-violet-500 rounded-full animate-pulse"></span>
+                        <span className="bg-purple-100/80 text-purple-700 text-xs font-bold px-2 py-1 rounded-lg border border-purple-200/50">
+                          {course.courseCode}
+                        </span>
+                        {course.status && (
+                          <span className={`text-xs font-bold px-2 py-1 rounded-lg ${
+                            course.status === 'Active' 
+                              ? 'bg-emerald-100/80 text-emerald-700 border border-emerald-200/50' 
+                              : 'bg-red-100/80 text-red-700 border border-red-200/50'
+                          }`}>
+                            {course.status}
                           </span>
-                          <span className="text-xs text-gray-600 bg-gray-100/80 px-3 py-1 rounded-full">{course.sectionStatus}</span>
-                          {course.status && (
-                            <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-                              course.status === 'Active' 
-                                ? 'bg-emerald-100/80 text-emerald-700 border border-emerald-200/50' 
-                                : 'bg-red-100/80 text-red-700 border border-red-200/50'
-                            }`}>
-                              {course.status}
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="font-bold text-lg text-gray-800 mb-2">{course.courseName}</h3>
+                        )}
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <h4 className="font-bold text-sm text-purple-700 mb-2">{course.courseName}</h4>
+                      
+                      <div className="space-y-2 text-xs">
                         {course.credits && (
-                          <div className="flex items-center gap-2 text-sm">
+                          <div className="flex items-center gap-2">
                             <span className="text-gray-600">Credits:</span>
-                            <span className="font-mono font-bold text-cyan-600 bg-cyan-50/80 px-3 py-1 rounded-lg border border-cyan-200/50">
+                            <span className="font-mono font-bold text-cyan-600 bg-cyan-50/80 px-2 py-1 rounded-md border border-cyan-200/50">
                               {course.credits}
                             </span>
                           </div>
                         )}
-                      </div>
-                    </div>
-                    
-                    {/* Time Information */}
-                    {course.timeInfo && course.timeInfo.length > 0 && (
-                      <div className="mt-4 mb-4">
-                        <p className="text-sm font-bold text-purple-700 mb-3 flex items-center gap-2">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          Schedule
-                        </p>
-                        <div className="space-y-2">
-                          {course.timeInfo.map((time, timeIndex) => (
-                            <div key={timeIndex} className="flex items-center gap-3 text-sm bg-gray-100/80 px-4 py-3 rounded-xl border border-gray-200/50">
-                              <svg className="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              <span className="text-gray-700 font-medium flex-1">{time.start} - {time.end}</span>
-                              <span className="text-gray-500">•</span>
-                              <div className="flex items-center gap-2">
-                                <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
-                                <span className="text-purple-700 font-medium">{time.room}</span>
-                              </div>
-                            </div>
-                          ))}
+                        
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-600">Section:</span>
+                          <span className="text-gray-700 font-medium">{course.sectionStatus}</span>
                         </div>
-                      </div>
-                    )}
-                    
-                    <div className="flex flex-wrap gap-2 mt-4">
-                      {course.statusLabels && course.statusLabels.map((label, labelIndex) => (
-                        <span
-                          key={labelIndex}
-                          className={`text-xs font-bold px-3 py-1 rounded-full ${
-                            label.type === 'success'
-                              ? 'bg-emerald-100/80 text-emerald-700 border border-emerald-200/50'
-                              : label.type === 'danger'
-                              ? 'bg-red-100/80 text-red-700 border border-red-200/50'
-                              : 'bg-amber-100/80 text-amber-700 border border-amber-200/50'
-                          }`}
-                        >
-                          {label.text}
-                        </span>
-                      ))}
-                    </div>
 
-                    {course.result && course.result !== '-' && (
-                      <div className="mt-4 pt-4 border-t border-gray-200/50">
-                        <p className="text-sm text-gray-600">
-                          Result: <span className="font-bold text-gray-800">{course.result}</span>
-                        </p>
+                        {course.timeInfo && course.timeInfo.length > 0 && (
+                          <div className="flex items-center gap-2">
+                            <svg className="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className="text-gray-700 font-medium">
+                              {course.timeInfo[0].start} - {course.timeInfo[0].end}
+                            </span>
+                          </div>
+                        )}
+
+                        {course.result && course.result !== '-' && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-600">Result:</span>
+                            <span className="font-bold text-gray-800">{course.result}</span>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                ))
-                ) : (
-                  <div className="text-center py-12">
-                    <div className="inline-flex flex-col items-center gap-4 bg-gray-100/80 px-8 py-10 rounded-2xl border border-gray-200/50">
-                      <svg className="w-16 h-16 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                      </svg>
-                      <p className="text-gray-600 font-medium">No registered courses found</p>
+
+                      <div className="flex flex-wrap gap-1 mt-3">
+                        {course.statusLabels && course.statusLabels.slice(0, 2).map((label, labelIndex) => (
+                          <span
+                            key={labelIndex}
+                            className={`text-xs font-bold px-2 py-1 rounded-md ${
+                              label.type === 'success'
+                                ? 'bg-emerald-100/80 text-emerald-700 border border-emerald-200/50'
+                                : label.type === 'danger'
+                                ? 'bg-red-100/80 text-red-700 border border-red-200/50'
+                                : 'bg-amber-100/80 text-amber-700 border border-amber-200/50'
+                            }`}
+                          >
+                            {label.text}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                )}
+                ))}
               </div>
             </div>
           </div>
@@ -647,45 +625,56 @@ const Home = () => {
 
         {/* Semester Information */}
         {userData.registration.semesters && userData.registration.semesters.length > 0 && (
-          <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl overflow-hidden border border-gray-200/50">
-            <div className="relative bg-linear-to-r from-teal-500 via-cyan-500 to-blue-500 px-8 py-6">
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-gray-200/50">
+            <div className="relative bg-linear-to-r from-teal-500 via-cyan-500 to-blue-500 px-6 py-5">
               <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mb-16"></div>
-              <h2 className="relative z-10 text-2xl font-bold text-white flex items-center gap-3">
+              <h2 className="relative z-10 text-xl font-bold text-white flex items-center gap-3">
                 <div className="bg-white/30 backdrop-blur-sm p-2 rounded-xl">
-                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                 </div>
                 Available Semesters
-                <span className="ml-auto text-sm font-normal text-teal-100 bg-white/10 px-4 py-2 rounded-full">
+                <span className="ml-auto text-sm font-normal text-teal-100 bg-white/10 px-3 py-1 rounded-full">
                   {userData.registration.semesters.length} Total
                 </span>
               </h2>
             </div>
-            <div className="p-8">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {userData.registration.semesters.map((semester, index) => (
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {userData.registration.semesters.slice(0, cardsToShow).map((semester, index) => (
                   <div
                     key={index}
-                    className={`p-5 rounded-xl border-2 transition-all duration-300 ${
+                    className={`bg-gray-50/80 backdrop-blur-sm border border-gray-200/50 rounded-xl overflow-hidden hover:border-teal-300/70 transition-all duration-300 ${
                       semester.selected
-                        ? 'border-teal-300/70 bg-teal-50/80 backdrop-blur-sm'
-                        : 'border-gray-200/50 bg-gray-50/80 hover:border-gray-300/70'
+                        ? 'border-teal-300/70 bg-teal-50/80'
+                        : 'border-gray-200/50 bg-gray-50/80'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="bg-linear-to-r from-teal-50/80 to-cyan-50/80 border-b border-teal-200/50 px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></span>
+                        <span className="text-sm font-bold text-teal-700">Semester</span>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <div className="flex items-center gap-3">
+                        {semester.selected && (
+                          <div className="bg-teal-100/80 p-2 rounded-lg border border-teal-200/50">
+                            <svg className="w-5 h-5 text-teal-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        )}
+                        <span className={`text-sm font-bold ${
+                          semester.selected ? 'text-teal-700' : 'text-gray-600'
+                        }`}>
+                          {semester.text}
+                        </span>
+                      </div>
                       {semester.selected && (
-                        <div className="bg-teal-100/80 p-2 rounded-lg border border-teal-200/50">
-                          <svg className="w-5 h-5 text-teal-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                        </div>
+                        <p className="text-xs text-teal-600 font-medium mt-2">Currently Selected</p>
                       )}
-                      <span className={`text-sm font-bold ${
-                        semester.selected ? 'text-teal-700' : 'text-gray-600'
-                      }`}>
-                        {semester.text}
-                      </span>
                     </div>
                   </div>
                 ))}

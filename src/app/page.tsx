@@ -299,8 +299,8 @@ export default function Home() {
               </button>
 
               {/* Footer Info */}
-              <p className="text-center text-xs text-gray-500 pt-2">
-                Secure login powered by AIUB Portal System
+              <p className="text-center text-xs text-red-500 pt-2">
+                This is now under development. Don't Login now.
               </p>
             </form>
           </div>
