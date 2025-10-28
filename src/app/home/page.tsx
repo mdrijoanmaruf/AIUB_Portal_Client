@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Navbar from '@/components/Navbar/Navbar'
+import Loading from './loading'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'
 
@@ -230,17 +231,7 @@ const Home = () => {
   }
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-blue-50 via-white to-indigo-50">
-        <div className="text-center">
-          <div className="relative">
-            <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-blue-400 border-t-transparent mb-6"></div>
-            <div className="absolute inset-0 inline-block animate-ping rounded-full h-16 w-16 border-4 border-blue-400 opacity-20"></div>
-          </div>
-          <p className="text-blue-600 text-lg font-medium">Loading your portal...</p>
-        </div>
-      </div>
-    )
+    return <Loading />
   }
 
   if (error || !userData) {

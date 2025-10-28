@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import FilterPanel from './FilterPanel'
 import CourseSectionsTable from './CourseSectionsTable'
 import Swal from 'sweetalert2'
+import RoutineSkeleton from '../skeletons/RoutineSkeleton'
 
 interface CourseSection {
   _id: string
@@ -367,14 +368,7 @@ const RoutineContainer: React.FC = () => {
   })
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading sections...</p>
-        </div>
-      </div>
-    )
+    return <RoutineSkeleton />
   }
 
   return (

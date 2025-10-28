@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { FiArrowLeft, FiDownload, FiTrash2, FiBook, FiCalendar } from 'react-icons/fi'
 import RoutineCard from './RoutineCard'
+import RoutineSkeleton from '../skeletons/RoutineSkeleton'
 import Swal from 'sweetalert2'
 
 interface CourseSection {
@@ -149,14 +150,7 @@ const MyRoutineContainer: React.FC = () => {
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your routine...</p>
-        </div>
-      </div>
-    )
+    return <RoutineSkeleton />
   }
 
   return (
