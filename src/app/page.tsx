@@ -12,7 +12,8 @@ export default function Home() {
     username: '23-53347-3',
     password: '&&&saif126638RSFF&&&',
     captcha: '',
-    captchaToken: ''
+    captchaToken: '',
+    sessionCookies: ''
   })
   const [captchaImage, setCaptchaImage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -36,7 +37,12 @@ export default function Home() {
       
       if (data.success) {
         setCaptchaImage(data.data.imageUrl)
-        setFormData(prev => ({ ...prev, captchaToken: data.data.token, captcha: '' }))
+        setFormData(prev => ({ 
+          ...prev, 
+          captchaToken: data.data.token, 
+          sessionCookies: data.data.sessionCookies || '', 
+          captcha: '' 
+        }))
       } else {
         throw new Error(data.message)
       }
@@ -79,9 +85,14 @@ export default function Home() {
       if (result.success) {
         setSuccess('Login successful! Redirecting...')
         
-        // Store user data in localStorage
+        // Store JWT token and user data in localStorage
         if (result.data) {
-          localStorage.setItem('userData', JSON.stringify(result.data))
+          if (result.data.token) {
+            localStorage.setItem('authToken', result.data.token)
+          }
+          // Store user data without the token
+          const { token, ...userDataWithoutToken } = result.data
+          localStorage.setItem('userData', JSON.stringify(userDataWithoutToken))
         }
         
         setTimeout(() => {

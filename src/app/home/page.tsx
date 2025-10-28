@@ -183,19 +183,36 @@ const Home = () => {
       setLoading(true)
       setError('')
       
-      const response = await fetch(`${API_BASE}/user/data`)
+      // Get auth token from localStorage
+      const token = localStorage.getItem('authToken')
+      
+      if (!token) {
+        // No token, redirect to login
+        router.push('/')
+        return
+      }
+      
+      const response = await fetch(`${API_BASE}/user/data`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       const result = await response.json()
 
       if (result.success && result.data) {
         setUserData(result.data)
       } else {
-        // No user data found, redirect to login
+        // Token invalid or expired, redirect to login
+        localStorage.removeItem('authToken')
+        localStorage.removeItem('userData')
         router.push('/')
       }
     } catch (err: any) {
       console.error('Error fetching user data:', err)
       setError('Failed to load user data')
       // Redirect to login on error
+      localStorage.removeItem('authToken')
+      localStorage.removeItem('userData')
       setTimeout(() => {
         router.push('/')
       }, 2000)
@@ -205,8 +222,9 @@ const Home = () => {
   }
 
   const handleLogout = () => {
-    // Clear localStorage if any
+    // Clear localStorage
     localStorage.removeItem('userData')
+    localStorage.removeItem('authToken')
     // Redirect to login
     router.push('/')
   }
