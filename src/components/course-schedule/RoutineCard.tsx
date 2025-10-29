@@ -1,7 +1,7 @@
 'use client'
 
-import React from 'react'
-import { FiBook, FiClock, FiUsers, FiX, FiCalendar } from 'react-icons/fi'
+import React, { useState } from 'react'
+import { FiBook, FiClock, FiUsers, FiX, FiCalendar, FiChevronDown, FiChevronUp } from 'react-icons/fi'
 
 interface CourseSection {
   _id: string
@@ -24,10 +24,13 @@ interface CourseSection {
 
 interface RoutineCardProps {
   section: CourseSection
+  alternativeSections?: string[]
   onRemove: (sectionId: string) => void
 }
 
-const RoutineCard: React.FC<RoutineCardProps> = ({ section, onRemove }) => {
+const RoutineCard: React.FC<RoutineCardProps> = ({ section, alternativeSections = [], onRemove }) => {
+  const [showAlternatives, setShowAlternatives] = useState(false)
+
   return (
     <div className="bg-linear-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 sm:p-5 hover:border-blue-300 hover:shadow-lg transition-all duration-200">
       <div className="flex items-start justify-between gap-2 sm:gap-4 mb-3 sm:mb-4">
@@ -94,6 +97,38 @@ const RoutineCard: React.FC<RoutineCardProps> = ({ section, onRemove }) => {
           </div>
         ))}
       </div>
+
+      {/* Alternative Sections */}
+      {alternativeSections.length > 0 && (
+        <div className="mt-4 border-t border-blue-200 pt-4">
+          <button
+            onClick={() => setShowAlternatives(!showAlternatives)}
+            className="flex items-center justify-between w-full text-left"
+          >
+            <span className="text-sm font-semibold text-gray-700">
+              Alternative Sections ({alternativeSections.length})
+            </span>
+            {showAlternatives ? (
+              <FiChevronUp className="h-4 w-4 text-gray-600" />
+            ) : (
+              <FiChevronDown className="h-4 w-4 text-gray-600" />
+            )}
+          </button>
+          
+          {showAlternatives && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {alternativeSections.map((altSection, idx) => (
+                <span
+                  key={idx}
+                  className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Section {altSection}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
