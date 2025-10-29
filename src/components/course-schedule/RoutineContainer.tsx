@@ -98,11 +98,46 @@ const RoutineContainer: React.FC = () => {
 
   const fetchAllSections = async (courseNames: string[]) => {
     try {
-      // Fetch all courses from MongoDB API
+      // Check if data is cached
+      const cachedData = localStorage.getItem('allCourseSections')
+      const cacheTimestamp = localStorage.getItem('allCourseSectionsTimestamp')
+      
+      if (cachedData && cacheTimestamp) {
+        const age = Date.now() - parseInt(cacheTimestamp)
+        // Cache for 30 minutes (1800000 ms)
+        if (age < 1800000) {
+          try {
+            const parsedCache = JSON.parse(cachedData)
+            if (Array.isArray(parsedCache) && parsedCache.length > 0) {
+              console.log('Using cached course sections data')
+              // Filter courses by the selected course names
+              const filteredSections = parsedCache.filter((course: CourseSection) => 
+                courseNames.includes(course['Course Title'])
+              )
+              setCourseSections(filteredSections)
+              setIsLoading(false)
+              return
+            }
+          } catch (error) {
+            console.error('Error parsing cached course data:', error)
+          }
+        }
+      }
+
+      // Fetch from server if no valid cache
+      console.log('Fetching fresh course sections from server')
       const response = await fetch('https://aiub-course-kappa.vercel.app/api/courses')
       const result = await response.json()
       
       if (result.success && Array.isArray(result.data)) {
+        // Cache the full data
+        try {
+          localStorage.setItem('allCourseSections', JSON.stringify(result.data))
+          localStorage.setItem('allCourseSectionsTimestamp', Date.now().toString())
+        } catch (error) {
+          console.error('Error caching course sections:', error)
+        }
+
         // Filter courses by the selected course names
         const filteredSections = result.data.filter((course: CourseSection) => 
           courseNames.includes(course['Course Title'])

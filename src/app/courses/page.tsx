@@ -9,7 +9,8 @@ async function getCourseNames(): Promise<string[]> {
   try {
     // Fetch all courses from MongoDB API
     const response = await fetch('https://aiub-course-kappa.vercel.app/api/courses', {
-      cache: 'no-store', // Always fetch fresh data
+      cache: 'force-cache', // Use Next.js caching
+      next: { revalidate: 1800 } // Revalidate every 30 minutes
     })
 
     if (!response.ok) {

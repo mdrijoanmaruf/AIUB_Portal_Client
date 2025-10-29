@@ -55,10 +55,42 @@ const MyRoutineContainer: React.FC = () => {
 
   const fetchAllSections = async () => {
     try {
+      // Check if data is cached
+      const cachedData = localStorage.getItem('allCourseSections')
+      const cacheTimestamp = localStorage.getItem('allCourseSectionsTimestamp')
+      
+      if (cachedData && cacheTimestamp) {
+        const age = Date.now() - parseInt(cacheTimestamp)
+        // Cache for 30 minutes (1800000 ms)
+        if (age < 1800000) {
+          try {
+            const parsedCache = JSON.parse(cachedData)
+            if (Array.isArray(parsedCache) && parsedCache.length > 0) {
+              console.log('Using cached course sections data')
+              setAllSections(parsedCache)
+              setIsLoading(false)
+              return
+            }
+          } catch (error) {
+            console.error('Error parsing cached course data:', error)
+          }
+        }
+      }
+
+      // Fetch from server if no valid cache
+      console.log('Fetching fresh course sections from server')
       const response = await fetch('https://aiub-course-kappa.vercel.app/api/courses')
       const data = await response.json()
       if (data.success && Array.isArray(data.data)) {
         setAllSections(data.data)
+        
+        // Cache the data
+        try {
+          localStorage.setItem('allCourseSections', JSON.stringify(data.data))
+          localStorage.setItem('allCourseSectionsTimestamp', Date.now().toString())
+        } catch (error) {
+          console.error('Error caching course sections:', error)
+        }
       }
     } catch (error) {
       console.error('Error fetching all sections:', error)
