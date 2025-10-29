@@ -35,6 +35,7 @@ interface Filters {
   time: string[]
   day: string[]
   searchTerm: string
+  minSeats: string
 }
 
 const RoutineContainer: React.FC = () => {
@@ -50,7 +51,8 @@ const RoutineContainer: React.FC = () => {
     classType: [],
     time: [],
     day: [],
-    searchTerm: ''
+    searchTerm: '',
+    minSeats: ''
   })
 
   // Load course data from localStorage and fetch sections
@@ -189,6 +191,14 @@ const RoutineContainer: React.FC = () => {
       })
     }
 
+    if (filters.minSeats) {
+      const minSeatsValue = filters.minSeats === '30+' ? 30 : parseInt(filters.minSeats)
+      filtered = filtered.filter(s => {
+        const availableSeats = parseInt(s.Capacity) - parseInt(s.Count)
+        return availableSeats >= minSeatsValue
+      })
+    }
+
     setFilteredSections(filtered)
   }
 
@@ -279,7 +289,8 @@ const RoutineContainer: React.FC = () => {
     filters.status.length +
     filters.classType.length +
     filters.time.length +
-    filters.day.length
+    filters.day.length +
+    (filters.minSeats ? 1 : 0)
 
   // Get unique time slots from filtered sections (based on current course filter)
   const getAvailableTimeSlots = (): string[] => {

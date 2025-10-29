@@ -10,6 +10,7 @@ interface Filters {
   time: string[]
   day: string[]
   searchTerm: string
+  minSeats: string
 }
 
 interface FilterPanelProps {
@@ -49,7 +50,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       classType: [],
       time: [],
       day: [],
-      searchTerm: ''
+      searchTerm: '',
+      minSeats: ''
     })
   }
 
@@ -74,7 +76,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       </div>
 
       {/* Compact Filter Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 mb-2 sm:mb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 sm:gap-3 mb-2 sm:mb-3">
         {/* Course Dropdown */}
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">Course</label>
@@ -121,6 +123,24 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             {availableTimeSlots.map(timeSlot => (
               <option key={timeSlot} value={timeSlot}>{timeSlot}</option>
             ))}
+          </select>
+        </div>
+
+        {/* Minimum Seats Dropdown */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Min Seats</label>
+          <select
+            value={filters.minSeats}
+            onChange={(e) => onFiltersChange({ ...filters, minSeats: e.target.value })}
+            className="w-full px-2 py-1.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="">Any Seats</option>
+            <option value="5">5+ seats</option>
+            <option value="10">10+ seats</option>
+            <option value="15">15+ seats</option>
+            <option value="20">20+ seats</option>
+            <option value="25">25+ seats</option>
+            <option value="30+">30+ seats</option>
           </select>
         </div>
 
@@ -201,6 +221,14 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                 </button>
               </span>
             ))}
+            {filters.minSeats && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs">
+                Min Seats: {filters.minSeats}
+                <button onClick={() => onFiltersChange({ ...filters, minSeats: '' })} className="hover:text-orange-900">
+                  <FiX className="h-3 w-3" />
+                </button>
+              </span>
+            )}
           </div>
         </div>
       )}
