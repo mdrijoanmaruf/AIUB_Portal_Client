@@ -10,7 +10,7 @@ export default function Home() {
   const router = useRouter()
   const [formData, setFormData] = useState({
     username: '23-53347-3',
-    password: '&&&saif126638RSFF&&&',
+    password: '',
     captcha: '',
     captchaToken: '',
     sessionCookies: ''
@@ -90,9 +90,10 @@ export default function Home() {
           if (result.data.token) {
             localStorage.setItem('authToken', result.data.token)
           }
-          // Store user data without the token
+          // Store user data with timestamp for caching
           const { token, ...userDataWithoutToken } = result.data
           localStorage.setItem('userData', JSON.stringify(userDataWithoutToken))
+          localStorage.setItem('userDataTimestamp', Date.now().toString())
         }
         
         setTimeout(() => {

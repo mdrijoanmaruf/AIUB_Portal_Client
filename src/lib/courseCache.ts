@@ -7,6 +7,8 @@ export const CACHE_KEYS = {
   ALL_SECTIONS_TIMESTAMP: 'allCourseSectionsTimestamp',
   COURSE_NAMES: 'courseNames',
   COURSE_NAMES_TIMESTAMP: 'courseNamesTimestamp',
+  USER_DATA: 'userData',
+  USER_DATA_TIMESTAMP: 'userDataTimestamp',
 }
 
 /**

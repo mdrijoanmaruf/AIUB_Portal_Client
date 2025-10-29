@@ -192,7 +192,31 @@ const Home = () => {
         router.push('/')
         return
       }
+
+      // Check if data is cached
+      const cachedUserData = localStorage.getItem('userData')
+      const cacheTimestamp = localStorage.getItem('userDataTimestamp')
       
+      if (cachedUserData && cacheTimestamp) {
+        const age = Date.now() - parseInt(cacheTimestamp)
+        // Cache for 10 minutes (600000 ms) - shorter duration for user data
+        if (age < 600000) {
+          try {
+            const parsedCache = JSON.parse(cachedUserData)
+            if (parsedCache && parsedCache.studentId) {
+              console.log('Using cached user data')
+              setUserData(parsedCache)
+              setLoading(false)
+              return
+            }
+          } catch (error) {
+            console.error('Error parsing cached user data:', error)
+          }
+        }
+      }
+      
+      // Fetch fresh data if no valid cache
+      console.log('Fetching fresh user data from server')
       const response = await fetch(`${API_BASE}/user/data`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -202,10 +226,19 @@ const Home = () => {
 
       if (result.success && result.data) {
         setUserData(result.data)
+        
+        // Cache the user data
+        try {
+          localStorage.setItem('userData', JSON.stringify(result.data))
+          localStorage.setItem('userDataTimestamp', Date.now().toString())
+        } catch (error) {
+          console.error('Error caching user data:', error)
+        }
       } else {
         // Token invalid or expired, redirect to login
         localStorage.removeItem('authToken')
         localStorage.removeItem('userData')
+        localStorage.removeItem('userDataTimestamp')
         router.push('/')
       }
     } catch (err: any) {
@@ -214,6 +247,7 @@ const Home = () => {
       // Redirect to login on error
       localStorage.removeItem('authToken')
       localStorage.removeItem('userData')
+      localStorage.removeItem('userDataTimestamp')
       setTimeout(() => {
         router.push('/')
       }, 2000)
@@ -223,9 +257,14 @@ const Home = () => {
   }
 
   const handleLogout = () => {
-    // Clear localStorage
+    // Clear localStorage - including cache
     localStorage.removeItem('userData')
     localStorage.removeItem('authToken')
+    localStorage.removeItem('userDataTimestamp')
+    localStorage.removeItem('allCourseSections')
+    localStorage.removeItem('allCourseSectionsTimestamp')
+    localStorage.removeItem('courseNames')
+    localStorage.removeItem('courseNamesTimestamp')
     // Redirect to login
     router.push('/')
   }

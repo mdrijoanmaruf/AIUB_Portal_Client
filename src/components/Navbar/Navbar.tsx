@@ -23,12 +23,20 @@ const Navbar = () => {
     setIsMenuOpen(false) // Close menu on mobile after navigation
   }
 
+  const navigateToGradeReport = () => {
+    router.push('/grade-report')
+    setIsMenuOpen(false)
+  }
+
   return (
     <nav className="bg-white shadow-md border-b border-blue-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Left - Logo */}
-          <div className="flex items-center gap-3">
+          <button 
+            onClick={() => router.push('/home')}
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200"
+          >
             <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
               <Image 
                 src="/aiub.svg" 
@@ -41,7 +49,7 @@ const Navbar = () => {
             <div className="hidden md:block">
               <h2 className="text-lg font-bold text-blue-600">AIUB Portal</h2>
             </div>
-          </div>
+          </button>
 
           {/* Middle - Nav Items */}
           <div className="hidden md:flex items-center gap-1 md:gap-2">
@@ -56,7 +64,10 @@ const Navbar = () => {
               <FaClipboardList className="w-4 h-4" />
               <span className="hidden sm:inline text-sm font-medium">Registration</span>
             </button>
-            <button className="flex items-center gap-2 px-3 md:px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200">
+            <button 
+              onClick={navigateToGradeReport}
+              className="flex items-center gap-2 px-3 md:px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200"
+            >
               <FaChartBar className="w-4 h-4" />
               <span className="hidden sm:inline text-sm font-medium">Grade Report</span>
             </button>
@@ -102,7 +113,10 @@ const Navbar = () => {
                 <FaClipboardList className="w-5 h-5" />
                 <span className="text-sm font-medium">Registration</span>
               </button>
-              <button className="flex items-center gap-3 w-full px-3 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200">
+              <button 
+                onClick={navigateToGradeReport}
+                className="flex items-center gap-3 w-full px-3 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200"
+              >
                 <FaChartBar className="w-5 h-5" />
                 <span className="text-sm font-medium">Grade Report</span>
               </button>
