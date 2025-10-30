@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar/Navbar'
-import { FaGraduationCap, FaBook, FaCalendar, FaStar, FaAward, FaChartLine, FaTrophy, FaFire } from 'react-icons/fa'
+import Loading from './loading'
+import { FaGraduationCap, FaBook, FaCalendar, FaStar, FaAward, FaChartLine, FaTrophy, FaFire, FaCalculator, FaSync } from 'react-icons/fa'
 import {
   LineChart,
   Line,
@@ -28,6 +29,15 @@ import {
 } from 'recharts'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'
+
+// Global cache for grade report data
+let gradeReportCache: {
+  curriculumData: GradeReport | null
+  semesterData: GradeReport | null
+  timestamp: number
+} | null = null
+
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
 interface Course {
   courseCode: string
@@ -66,10 +76,22 @@ export default function GradeReportPage() {
     fetchGradeReports()
   }, [])
 
-  const fetchGradeReports = async () => {
+  const fetchGradeReports = async (forceRefresh = false) => {
     try {
       setLoading(true)
       setError('')
+
+      // Check cache first (unless force refresh)
+      const now = Date.now()
+      if (!forceRefresh && gradeReportCache && (now - gradeReportCache.timestamp) < CACHE_DURATION) {
+        console.log('📊 Using cached grade report data (cache age:', Math.round((now - gradeReportCache.timestamp) / 1000), 'seconds)')
+        setCurriculumData(gradeReportCache.curriculumData)
+        setSemesterData(gradeReportCache.semesterData)
+        setLoading(false)
+        return
+      }
+
+      console.log('📊 Fetching fresh grade report data from API')
 
       // Get auth token
       const authToken = localStorage.getItem('authToken')
@@ -95,6 +117,13 @@ export default function GradeReportPage() {
         console.log('By Semester:', result.data.bySemester)
         console.log('Curriculum Semesters:', result.data.byCurriculum?.semesters?.length || 0)
         console.log('Semester Semesters:', result.data.bySemester?.semesters?.length || 0)
+        
+        // Cache the data
+        gradeReportCache = {
+          curriculumData: result.data.byCurriculum,
+          semesterData: result.data.bySemester,
+          timestamp: now
+        }
         
         setCurriculumData(result.data.byCurriculum)
         setSemesterData(result.data.bySemester)
@@ -350,17 +379,7 @@ export default function GradeReportPage() {
                       activeTab === 'semester' ? semesterData : null
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-indigo-50">
-        <Navbar />
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading grade reports...</p>
-          </div>
-        </div>
-      </div>
-    )
+    return <Loading />
   }
 
   if (error) {
@@ -371,7 +390,7 @@ export default function GradeReportPage() {
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
             <p className="text-red-600 text-center">{error}</p>
             <button
-              onClick={fetchGradeReports}
+              onClick={() => fetchGradeReports(true)}
               className="mt-4 w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
             >
               Retry
@@ -387,77 +406,91 @@ export default function GradeReportPage() {
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Enhanced Header with Animated Gradient */}
-        <div className="relative bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-3xl shadow-2xl p-8 mb-8 overflow-hidden">
-          {/* Animated Background */}
-          <div className="absolute inset-0 bg-linear-to-r from-blue-400/20 to-purple-400/20 animate-pulse"></div>
-          
-          <div className="relative z-10 flex items-center justify-between flex-wrap gap-6">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-lg rounded-2xl flex items-center justify-center shadow-lg">
-                <FaGraduationCap className="w-8 h-8 text-white" />
+        {/* Responsive Header with Solid Background */}
+        <div className="relative bg-blue-600 rounded-xl shadow-xl p-4 sm:p-6 mb-4 sm:mb-6 overflow-hidden">
+          {/* Subtle Animated Background */}
+          <div className="absolute inset-0 bg-blue-500/10 animate-pulse"></div>
+
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center shadow-md">
+                <FaGraduationCap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <div className="text-white">
-                <h1 className="text-3xl font-bold mb-1 flex items-center gap-2">
-                  Academic Performance
-                  <FaTrophy className="w-6 h-6 text-yellow-300 animate-bounce" />
+                <h1 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2">
+                  <span className="hidden sm:inline">Academic Performance</span>
+                  <span className="sm:hidden">Performance</span>
+                  <FaTrophy className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-300 animate-bounce" />
                 </h1>
-                <p className="text-blue-100 text-sm">Track your academic journey and achievements</p>
+                <p className="text-blue-100 text-xs sm:text-sm hidden sm:block">Track your academic journey and achievements</p>
               </div>
             </div>
 
-            {/* Quick Stats */}
+            {/* Responsive Quick Stats */}
             {semesterData?.summary?.cgpa && (
-              <div className="flex gap-6 bg-white/10 backdrop-blur-lg rounded-2xl px-6 py-4 shadow-lg">
+              <div className="flex gap-3 sm:gap-4 bg-white/10 backdrop-blur-md rounded-lg px-3 sm:px-4 py-2 sm:py-3 shadow-md self-start sm:self-auto">
                 <div className="text-center">
                   <p className="text-xs text-blue-200 font-medium mb-1">CGPA</p>
-                  <p className="text-3xl font-bold text-white flex items-center gap-1">
+                  <p className="text-xl sm:text-2xl font-bold text-white flex items-center gap-1">
                     {semesterData.summary.cgpa}
-                    {parseFloat(semesterData.summary.cgpa) >= 3.5 && <FaFire className="w-5 h-5 text-orange-400" />}
+                    {parseFloat(semesterData.summary.cgpa) >= 3.5 && <FaFire className="w-3 h-3 sm:w-4 sm:h-4 text-orange-400" />}
                   </p>
                 </div>
                 {semesterData.summary.completedCredits && (
-                  <div className="text-center border-l border-white/20 pl-6">
+                  <div className="text-center border-l border-white/20 pl-3 sm:pl-4">
                     <p className="text-xs text-blue-200 font-medium mb-1">Credits</p>
-                    <p className="text-3xl font-bold text-white">{semesterData.summary.completedCredits}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-white">{semesterData.summary.completedCredits}</p>
                   </div>
                 )}
+                {/* Refresh Button */}
+                <div className="border-l border-white/20 pl-3 sm:pl-4 flex items-center">
+                  <button
+                    onClick={() => fetchGradeReports(true)}
+                    disabled={loading}
+                    className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Refresh data"
+                  >
+                    <FaSync className={`w-3 h-3 text-white ${loading ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Modern Tab Navigation */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 mb-8 overflow-hidden">
+        {/* Streamlined Tab Navigation */}
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 mb-6 overflow-hidden">
           <div className="flex">
             <button
               onClick={() => setActiveTab('semester')}
-              className={`flex-1 px-6 py-5 text-sm font-semibold transition-all duration-300 relative ${
+              className={`flex-1 px-2 sm:px-4 py-3 sm:py-4 text-xs sm:text-sm font-semibold transition-all duration-300 relative ${
                 activeTab === 'semester'
                   ? 'text-blue-600 bg-blue-50'
                   : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
               }`}
             >
-              <div className="flex items-center justify-center gap-2">
-                <FaCalendar className="w-5 h-5" />
-                <span>By Semester</span>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
+                <FaCalendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline sm:inline">By Semester</span>
+                <span className="xs:hidden sm:hidden">Semester</span>
               </div>
               {activeTab === 'semester' && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-blue-600 to-indigo-600"></div>
               )}
             </button>
-            
+
             <button
               onClick={() => setActiveTab('curriculum')}
-              className={`flex-1 px-6 py-5 text-sm font-semibold transition-all duration-300 relative border-l border-r border-gray-200 ${
+              className={`flex-1 px-2 sm:px-4 py-3 sm:py-4 text-xs sm:text-sm font-semibold transition-all duration-300 relative border-l border-r border-gray-200 ${
                 activeTab === 'curriculum'
                   ? 'text-blue-600 bg-blue-50'
                   : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
               }`}
             >
-              <div className="flex items-center justify-center gap-2">
-                <FaBook className="w-5 h-5" />
-                <span>By Curriculum</span>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
+                <FaBook className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline sm:inline">By Curriculum</span>
+                <span className="xs:hidden sm:hidden">Curriculum</span>
               </div>
               {activeTab === 'curriculum' && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-blue-600 to-indigo-600"></div>
@@ -466,15 +499,16 @@ export default function GradeReportPage() {
 
             <button
               onClick={() => setActiveTab('graph')}
-              className={`flex-1 px-6 py-5 text-sm font-semibold transition-all duration-300 relative ${
+              className={`flex-1 px-2 sm:px-4 py-3 sm:py-4 text-xs sm:text-sm font-semibold transition-all duration-300 relative ${
                 activeTab === 'graph'
                   ? 'text-blue-600 bg-blue-50'
                   : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
               }`}
             >
-              <div className="flex items-center justify-center gap-2">
-                <FaChartLine className="w-5 h-5" />
-                <span>Analytics</span>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
+                <FaChartLine className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline sm:inline">Analytics</span>
+                <span className="xs:hidden sm:hidden">Charts</span>
               </div>
               {activeTab === 'graph' && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-blue-600 to-indigo-600"></div>
@@ -487,52 +521,52 @@ export default function GradeReportPage() {
         {activeTab === 'graph' && graphData && (
           <div className="space-y-8">
             {/* Performance Metrics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-linear-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg p-6 text-white transform hover:scale-105 transition-all">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-linear-to-br from-green-500 to-emerald-600 rounded-lg shadow-lg p-4 text-white transform hover:scale-105 transition-all">
                 <div className="flex items-center justify-between mb-2">
-                  <FaAward className="w-8 h-8 opacity-80" />
-                  <span className="text-3xl font-bold">{graphData.metrics.aGrades}</span>
+                  <FaAward className="w-6 h-6 opacity-80" />
+                  <span className="text-2xl font-bold">{graphData.metrics.aGrades}</span>
                 </div>
-                <p className="text-sm text-green-100 font-medium">A/A+ Grades</p>
-                <div className="mt-2 text-xs text-green-200">{graphData.metrics.performanceRate}% Excellence</div>
+                <p className="text-xs text-green-100 font-medium">A/A+ Grades</p>
+                <div className="mt-1 text-xs text-green-200">{graphData.metrics.performanceRate}% Excellence</div>
               </div>
 
-              <div className="bg-linear-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg p-6 text-white transform hover:scale-105 transition-all">
+              <div className="bg-linear-to-br from-blue-500 to-indigo-600 rounded-lg shadow-lg p-4 text-white transform hover:scale-105 transition-all">
                 <div className="flex items-center justify-between mb-2">
-                  <FaBook className="w-8 h-8 opacity-80" />
-                  <span className="text-3xl font-bold">{graphData.metrics.completedCourses}</span>
+                  <FaBook className="w-6 h-6 opacity-80" />
+                  <span className="text-2xl font-bold">{graphData.metrics.completedCourses}</span>
                 </div>
-                <p className="text-sm text-blue-100 font-medium">Courses Completed</p>
-                <div className="mt-2 text-xs text-blue-200">of {graphData.metrics.totalCourses} total</div>
+                <p className="text-xs text-blue-100 font-medium">Courses Completed</p>
+                <div className="mt-1 text-xs text-blue-200">of {graphData.metrics.totalCourses} total</div>
               </div>
 
-              <div className="bg-linear-to-br from-purple-500 to-pink-600 rounded-2xl shadow-lg p-6 text-white transform hover:scale-105 transition-all">
+              <div className="bg-linear-to-br from-purple-500 to-pink-600 rounded-lg shadow-lg p-4 text-white transform hover:scale-105 transition-all">
                 <div className="flex items-center justify-between mb-2">
-                  <FaStar className="w-8 h-8 opacity-80" />
-                  <span className="text-3xl font-bold">{graphData.metrics.passRate}%</span>
+                  <FaStar className="w-6 h-6 opacity-80" />
+                  <span className="text-2xl font-bold">{graphData.metrics.passRate}%</span>
                 </div>
-                <p className="text-sm text-purple-100 font-medium">Pass Rate</p>
-                <div className="mt-2 text-xs text-purple-200">{graphData.metrics.failedCourses} failed courses</div>
+                <p className="text-xs text-purple-100 font-medium">Pass Rate</p>
+                <div className="mt-1 text-xs text-purple-200">{graphData.metrics.failedCourses} failed courses</div>
               </div>
 
-              <div className="bg-linear-to-br from-orange-500 to-red-600 rounded-2xl shadow-lg p-6 text-white transform hover:scale-105 transition-all">
+              <div className="bg-linear-to-br from-orange-500 to-red-600 rounded-lg shadow-lg p-4 text-white transform hover:scale-105 transition-all">
                 <div className="flex items-center justify-between mb-2">
-                  <FaChartLine className="w-8 h-8 opacity-80" />
-                  <span className="text-3xl font-bold">{semesterData?.summary.cgpa}</span>
+                  <FaChartLine className="w-6 h-6 opacity-80" />
+                  <span className="text-2xl font-bold">{semesterData?.summary.cgpa}</span>
                 </div>
-                <p className="text-sm text-orange-100 font-medium">Current CGPA</p>
-                <div className="mt-2 text-xs text-orange-200">{graphData.metrics.bGrades} B grades</div>
+                <p className="text-xs text-orange-100 font-medium">Current CGPA</p>
+                <div className="mt-1 text-xs text-orange-200">{graphData.metrics.bGrades} B grades</div>
               </div>
             </div>
 
             {/* GPA Trend Chart */}
-            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-200">
-              <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <div className="bg-white rounded-lg shadow-lg p-4 border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <FaChartLine className="text-blue-600" />
                 GPA Progression Over Time
               </h3>
               {graphData.gpaData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={400}>
+                <ResponsiveContainer width="100%" height={350}>
                   <AreaChart data={graphData.gpaData}>
                     <defs>
                       <linearGradient id="colorCgpa" x1="0" y1="0" x2="0" y2="1">
@@ -546,13 +580,13 @@ export default function GradeReportPage() {
                       tick={{fontSize: 11}} 
                       angle={-45} 
                       textAnchor="end" 
-                      height={120}
+                      height={100}
                       interval={0}
                     />
                     <YAxis domain={[0, 4]} tick={{fontSize: 12}} />
                     <Tooltip 
                       contentStyle={{
-                        borderRadius: '12px', 
+                        borderRadius: '8px', 
                         border: '1px solid #e5e7eb',
                         boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
                       }}
@@ -571,49 +605,48 @@ export default function GradeReportPage() {
                       fillOpacity={1} 
                       fill="url(#colorCgpa)" 
                       name="Semester CGPA" 
-                      strokeWidth={3}
-                      dot={{ r: 5, stroke: '#1f2937', strokeWidth: 1, fill: '#ffffff' }}
+                      strokeWidth={2}
+                      dot={{ r: 4, stroke: '#1f2937', strokeWidth: 1, fill: '#ffffff' }}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-[400px] flex items-center justify-center text-gray-400">
+                <div className="h-[350px] flex items-center justify-center text-gray-400">
                   <p>No GPA data available yet</p>
                 </div>
               )}
             </div>
 
             {/* Grade Trend Over Time */}
-            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-200">
-              <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <div className="bg-white rounded-lg shadow-lg p-4 border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <FaStar className="text-purple-600" />
                 Grade Performance Trend (All Grades)
               </h3>
-              <ResponsiveContainer width="100%" height={350}>
+              <ResponsiveContainer width="100%" height={320}>
                 <BarChart data={graphData.gradeTrend}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis 
                     dataKey="semester" 
-                    tick={{fontSize: 11, fill: '#1f2937'}} 
+                    tick={{fontSize: 10, fill: '#1f2937'}} 
                     angle={-45} 
                     textAnchor="end" 
-                    height={120}
+                    height={100}
                     interval={0}
                   />
-                  <YAxis tick={{fontSize: 12}} />
+                  <YAxis tick={{fontSize: 11}} />
                   <Tooltip 
                     contentStyle={{
-                      borderRadius: '12px', 
+                      borderRadius: '8px', 
                       border: '1px solid #e5e7eb',
                       backgroundColor: '#ffffff'
                     }}
                     labelStyle={{
                       color: '#1f2937',
                       fontWeight: 'bold',
-                      fontSize: '14px'
+                      fontSize: '13px'
                     }}
                   />
-                  <Legend wrapperStyle={{paddingTop: '20px'}} />
                   <Bar dataKey="A+" stackId="a" fill="#16a34a" />
                   <Bar dataKey="A" stackId="a" fill="#22c55e" />
                   <Bar dataKey="A-" stackId="a" fill="#3b82f6" />
@@ -626,19 +659,19 @@ export default function GradeReportPage() {
                   <Bar dataKey="D+" stackId="a" fill="#fb923c" />
                   <Bar dataKey="D" stackId="a" fill="#f87171" />
                   <Bar dataKey="D-" stackId="a" fill="#ef4444" />
-                  <Bar dataKey="F" stackId="a" fill="#dc2626" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="F" stackId="a" fill="#dc2626" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Grade Distribution */}
-              <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-200">
-                <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+              <div className="bg-white rounded-lg shadow-lg p-4 border border-gray-200">
+                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                   <FaAward className="text-indigo-600" />
                   Overall Grade Distribution
                 </h3>
-                <ResponsiveContainer width="100%" height={350}>
+                <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
                       data={graphData.gradeDistData}
@@ -646,7 +679,7 @@ export default function GradeReportPage() {
                       cy="50%"
                       labelLine={true}
                       label={({ grade, count, percentage }) => `${grade}: ${count} (${percentage}%)`}
-                      outerRadius={110}
+                      outerRadius={90}
                       fill="#8884d8"
                       dataKey="count"
                     >
@@ -665,30 +698,30 @@ export default function GradeReportPage() {
               </div>
 
               {/* Credits per Semester */}
-              <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-200">
-                <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+              <div className="bg-white rounded-lg shadow-lg p-4 border border-gray-200">
+                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                   <FaBook className="text-purple-600" />
                   Credits Earned per Semester
                 </h3>
                 {graphData.creditsData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={350}>
+                  <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={graphData.creditsData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                       <XAxis 
                         dataKey="semester" 
-                        tick={{fontSize: 11}} 
+                        tick={{fontSize: 10}} 
                         angle={-45} 
                         textAnchor="end" 
-                        height={120}
+                        height={80}
                         interval={0}
                       />
-                      <YAxis tick={{fontSize: 12}} />
+                      <YAxis tick={{fontSize: 11}} />
                       <Tooltip 
-                        contentStyle={{borderRadius: '12px', border: '1px solid #e5e7eb'}}
+                        contentStyle={{borderRadius: '8px', border: '1px solid #e5e7eb'}}
                         formatter={(value) => [`${value} credits`, 'Credits']}
-                        labelStyle={{ color: '#1f2937', fontWeight: 700, fontSize: 14 }}
+                        labelStyle={{ color: '#1f2937', fontWeight: 700 }}
                       />
-                      <Bar dataKey="credits" fill="#8b5cf6" radius={[8, 8, 0, 0]}>
+                      <Bar dataKey="credits" fill="#8b5cf6" radius={[4, 4, 0, 0]}>
                         {graphData.creditsData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={`hsl(${270 - index * 15}, 70%, 60%)`} />
                         ))}
@@ -696,37 +729,37 @@ export default function GradeReportPage() {
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-[350px] flex items-center justify-center text-gray-400">
+                  <div className="h-[300px] flex items-center justify-center text-gray-400">
                     <p>No credits data available</p>
                   </div>
                 )}
               </div>
+            </div>
 
-              {/* Courses per Semester */}
-              <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-200">
-                <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                  <FaCalendar className="text-green-600" />
-                  Courses per Semester
-                </h3>
-                <ResponsiveContainer width="100%" height={350}>
-                  <BarChart data={graphData.coursesData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis 
-                      dataKey="semester" 
-                      tick={{fontSize: 11}} 
-                      angle={-45} 
-                      textAnchor="end" 
-                      height={120}
-                      interval={0}
-                    />
-                    <YAxis tick={{fontSize: 12}} />
-                    <Tooltip contentStyle={{borderRadius: '12px', border: '1px solid #e5e7eb'}} labelStyle={{ color: '#1f2937', fontWeight: 700, fontSize: 14 }} />
-                    <Legend wrapperStyle={{paddingTop: '20px'}} />
-                    <Bar dataKey="courses" fill="#10b981" radius={[8, 8, 0, 0]} name="Total Courses" />
-                    <Bar dataKey="completed" fill="#3b82f6" radius={[8, 8, 0, 0]} name="Completed" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+            {/* Courses per Semester - Full Width */}
+            <div className="bg-white rounded-lg shadow-lg p-4 border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <FaCalendar className="text-green-600" />
+                Courses per Semester
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={graphData.coursesData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="semester" 
+                    tick={{fontSize: 10}} 
+                    angle={-45} 
+                    textAnchor="end" 
+                    height={80}
+                    interval={0}
+                  />
+                  <YAxis tick={{fontSize: 11}} />
+                  <Tooltip contentStyle={{borderRadius: '8px', border: '1px solid #e5e7eb'}} labelStyle={{ color: '#1f2937', fontWeight: 700 }} />
+                  <Legend wrapperStyle={{paddingTop: '15px'}} />
+                  <Bar dataKey="courses" fill="#10b981" radius={[4, 4, 0, 0]} name="Total Courses" />
+                  <Bar dataKey="completed" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Completed" />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
         )}
@@ -736,38 +769,40 @@ export default function GradeReportPage() {
           <>
             {/* Student Info Card */}
             {currentData?.studentInfo && Object.keys(currentData.studentInfo).length > 0 && (
-              <div className="bg-white rounded-2xl shadow-xl p-6 mb-8 border border-gray-200">
-                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <div className="bg-white rounded-lg shadow-lg p-4 mb-6 border border-gray-200">
+                <h3 className="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
                   <FaGraduationCap className="text-blue-600" />
                   Student Information
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {Object.entries(currentData.studentInfo).map(([key, value]) => (
-                    <div key={key} className="bg-linear-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
-                      <p className="text-xs text-gray-500 font-medium mb-1">{key}</p>
-                      <p className="text-sm text-gray-900 font-bold">{value}</p>
-                    </div>
-                  ))}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Object.entries(currentData.studentInfo)
+                    .filter(([key]) => key.toLowerCase().includes('name') || key.toLowerCase().includes('id'))
+                    .map(([key, value]) => (
+                      <div key={key} className="bg-linear-to-br from-blue-50 to-indigo-50 rounded-lg p-3 border border-blue-100">
+                        <p className="text-xs text-gray-500 font-medium mb-1">{key}</p>
+                        <p className="text-sm text-gray-900 font-bold">{value}</p>
+                      </div>
+                    ))}
                 </div>
               </div>
             )}
 
             {/* Semesters */}
-            <div className="space-y-6">
+            <div className="space-y-4">
               {currentData?.semesters?.map((semester, index) => (
-                <div key={index} className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden transform transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
-                  {/* Semester Header with Gradient */}
-                  <div className="bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 px-6 py-5 flex items-center justify-between">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-3">
-                      <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                        <FaStar className="w-5 h-5" />
+                <div key={index} className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:scale-[1.01]">
+                  {/* Semester Header */}
+                  <div className="bg-blue-600 px-4 py-3 flex items-center justify-between">
+                    <h3 className="text-base font-bold text-white flex items-center gap-2">
+                      <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                        <FaStar className="w-4 h-4" />
                       </div>
                       {semester.title}
                     </h3>
                     {semester.gpa && (
-                      <div className="bg-white/20 backdrop-blur-lg px-6 py-3 rounded-xl shadow-lg">
-                        <span className="text-sm text-blue-100 font-medium mr-2">GPA:</span>
-                        <span className="text-2xl font-bold text-white">{semester.gpa}</span>
+                      <div className="bg-white/20 backdrop-blur-md px-3 py-2 rounded-lg shadow-md">
+                        <span className="text-xs text-blue-100 font-medium mr-1">GPA:</span>
+                        <span className="text-lg font-bold text-white">{semester.gpa}</span>
                       </div>
                     )}
                   </div>
@@ -777,19 +812,19 @@ export default function GradeReportPage() {
                     <table className="w-full">
                       <thead className="bg-linear-to-r from-gray-50 to-blue-50 border-b-2 border-blue-200">
                         <tr>
-                          <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                             Course Code
                           </th>
-                          <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                             Course Title
                           </th>
-                          <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
                             Credit
                           </th>
-                          <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
                             Grade
                           </th>
-                          <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
                             Grade Point
                           </th>
                         </tr>
@@ -797,111 +832,122 @@ export default function GradeReportPage() {
                       <tbody className="divide-y divide-gray-100">
                         {semester.courses.map((course, courseIndex) => (
                           <tr key={courseIndex} className="hover:bg-linear-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="inline-flex items-center px-3 py-1 rounded-lg bg-blue-100 text-blue-800 text-sm font-bold">
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-800 text-xs font-bold">
                                 {course.courseCode}
                               </span>
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="px-4 py-3">
                               <span className="text-sm text-gray-800 font-medium">{course.courseTitle}</span>
                             </td>
-                            <td className="px-6 py-4 text-center">
+                            <td className="px-4 py-3 text-center">
                               <span className="text-sm font-semibold text-gray-700">{course.credit || '-'}</span>
                             </td>
-                            <td className="px-6 py-4 text-center">
-                              <span className={`inline-flex items-center justify-center w-16 h-16 rounded-xl text-2xl font-black shadow-lg ${getGradeBgColor(course.grade)} ${getGradeColor(course.grade)}`}>
+                            <td className="px-4 py-3 text-center">
+                              <span className={`text-lg font-black ${getGradeColor(course.grade)}`}>
                                 {course.grade || '-'}
                               </span>
                             </td>
-                            <td className="px-6 py-4 text-center">
+                            <td className="px-4 py-3 text-center">
                               <span className="text-sm font-bold text-gray-800">{course.gradePoint || '-'}</span>
                             </td>
                           </tr>
                         ))}
                       </tbody>
                       {/* Semester Summary Row */}
-                      <tfoot className="bg-linear-to-r from-green-50 to-emerald-50 border-t-2 border-green-200">
+                      <tfoot className="bg-blue-50 border-t-2 border-blue-300">
                         <tr>
-                          <td colSpan={2} className="px-6 py-4 text-left">
-                            <span className="text-sm font-bold text-green-800">Semester Total</span>
+                          <td colSpan={2} className="px-4 py-4 text-left">
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                                <FaCalculator className="w-3 h-3 text-white" />
+                              </div>
+                              <span className="text-sm font-bold text-blue-800">Semester Summary</span>
+                            </div>
                           </td>
-                          <td className="px-6 py-4 text-center">
-                            <span className="text-sm font-bold text-green-800">
-                              {(() => {
-                                const totalCredits = semester.courses.reduce((sum, course) => {
-                                  const grade = course.grade?.toUpperCase()?.trim()
-                                  if (grade && grade !== 'W' && grade !== 'F' && grade !== 'UW' && grade !== '-') {
-                                    return sum + parseFloat(course.credit || '0')
-                                  }
-                                  return sum
-                                }, 0)
-                                return totalCredits.toFixed(1)
-                              })()}
-                            </span>
+                          <td className="px-4 py-4 text-center">
+                            <div className="bg-white rounded-md px-2 py-1 shadow-sm">
+                              <span className="text-sm font-bold text-gray-800">
+                                {(() => {
+                                  const totalCredits = semester.courses.reduce((sum, course) => {
+                                    const grade = course.grade?.toUpperCase()?.trim()
+                                    if (grade && grade !== 'W' && grade !== 'F' && grade !== 'UW' && grade !== '-') {
+                                      return sum + parseFloat(course.credit || '0')
+                                    }
+                                    return sum
+                                  }, 0)
+                                  return totalCredits.toFixed(1)
+                                })()}
+                              </span>
+                            </div>
                           </td>
-                          <td className="px-6 py-4 text-center">
-                            <span className="text-sm font-bold text-green-800">
-                              {(() => {
-                                let totalGradePoints = 0
-                                let totalCredits = 0
+                          <td className="px-4 py-4 text-center">
+                            <div className="bg-white rounded-md px-2 py-1 shadow-sm">
+                              <span className="text-sm font-bold text-gray-800">
+                                {(() => {
+                                  let totalGradePoints = 0
+                                  let totalCredits = 0
 
-                                semester.courses.forEach(course => {
-                                  const grade = course.grade?.toUpperCase()?.trim()
-                                  if (grade && grade !== 'W' && grade !== 'F' && grade !== 'UW' && grade !== '-') {
-                                    const rawGp = parseFloat(course.gradePoint || '0')
-                                    const credit = parseFloat(course.credit || '0')
+                                  semester.courses.forEach(course => {
+                                    const grade = course.grade?.toUpperCase()?.trim()
+                                    if (grade && grade !== 'W' && grade !== 'F' && grade !== 'UW' && grade !== '-') {
+                                      const rawGp = parseFloat(course.gradePoint || '0')
+                                      const credit = parseFloat(course.credit || '0')
 
-                                    // if rawGp <= 4 treat as per-credit, otherwise treat as total points
-                                    let pointsForCourse = 0
-                                    if (!isNaN(rawGp)) {
-                                      if (rawGp <= 4.01) {
-                                        pointsForCourse = rawGp * credit
-                                      } else {
-                                        pointsForCourse = rawGp
+                                      // if rawGp <= 4 treat as per-credit, otherwise treat as total points
+                                      let pointsForCourse = 0
+                                      if (!isNaN(rawGp)) {
+                                        if (rawGp <= 4.01) {
+                                          pointsForCourse = rawGp * credit
+                                        } else {
+                                          pointsForCourse = rawGp
+                                        }
+                                      }
+
+                                      if (pointsForCourse > 0 && credit > 0) {
+                                        totalGradePoints += pointsForCourse
+                                        totalCredits += credit
                                       }
                                     }
+                                  })
 
-                                    if (pointsForCourse > 0 && credit > 0) {
-                                      totalGradePoints += pointsForCourse
-                                      totalCredits += credit
-                                    }
-                                  }
-                                })
-
-                                const averageCgpa = totalCredits > 0 ? totalGradePoints / totalCredits : 0
-                                return averageCgpa.toFixed(2)
-                              })()}
-                            </span>
+                                  const averageCgpa = totalCredits > 0 ? totalGradePoints / totalCredits : 0
+                                  return averageCgpa.toFixed(2)
+                                })()}
+                              </span>
+                            </div>
                           </td>
-                          <td className="px-6 py-4 text-center">
-                            <span className="text-sm font-bold text-green-800">
-                              {(() => {
-                                let totalGradePoints = 0
+                          <td className="px-4 py-4 text-center">
+                            <div className="bg-white rounded-md px-2 py-1 shadow-sm">
+                              <span className="text-sm font-bold text-gray-800">
+                                {(() => {
+                                  let totalGradePoints = 0
 
-                                semester.courses.forEach(course => {
-                                  const grade = course.grade?.toUpperCase()?.trim()
-                                  if (grade && grade !== 'W' && grade !== 'F' && grade !== 'UW' && grade !== '-') {
-                                    const rawGp = parseFloat(course.gradePoint || '0')
-                                    const credit = parseFloat(course.credit || '0')
+                                  semester.courses.forEach(course => {
+                                    const grade = course.grade?.toUpperCase()?.trim()
+                                    if (grade && grade !== 'W' && grade !== 'F' && grade !== 'UW' && grade !== '-') {
+                                      const rawGp = parseFloat(course.gradePoint || '0')
+                                      const credit = parseFloat(course.credit || '0')
 
-                                    let pointsForCourse = 0
-                                    if (!isNaN(rawGp)) {
-                                      if (rawGp <= 4.01) {
-                                        pointsForCourse = rawGp * credit
-                                      } else {
-                                        pointsForCourse = rawGp
+                                      let pointsForCourse = 0
+                                      if (!isNaN(rawGp)) {
+                                        if (rawGp <= 4.01) {
+                                          pointsForCourse = rawGp * credit
+                                        } else {
+                                          pointsForCourse = rawGp
+                                        }
+                                      }
+
+                                      if (pointsForCourse > 0) {
+                                        totalGradePoints += pointsForCourse
                                       }
                                     }
+                                  })
 
-                                    if (pointsForCourse > 0) {
-                                      totalGradePoints += pointsForCourse
-                                    }
-                                  }
-                                })
-
-                                return totalGradePoints.toFixed(2)
-                              })()}
-                            </span>
+                                  return totalGradePoints.toFixed(2)
+                                })()}
+                              </span>
+                            </div>
                           </td>
                         </tr>
                       </tfoot>
@@ -915,11 +961,11 @@ export default function GradeReportPage() {
 
         {/* Empty State with Better Design */}
         {(activeTab === 'curriculum' || activeTab === 'semester') && (!currentData?.semesters || currentData.semesters.length === 0) && (
-          <div className="bg-white rounded-2xl shadow-xl p-16 text-center border border-gray-200">
-            <div className="w-24 h-24 bg-linear-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <FaGraduationCap className="w-12 h-12 text-blue-600" />
+          <div className="bg-white rounded-lg shadow-lg p-12 text-center border border-gray-200">
+            <div className="w-20 h-20 bg-linear-to-br from-blue-100 to-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <FaGraduationCap className="w-10 h-10 text-blue-600" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">No Grade Data Available</h3>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">No Grade Data Available</h3>
             <p className="text-gray-600">Your academic records will appear here once available.</p>
           </div>
         )}
