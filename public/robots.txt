@@ -1,0 +1,22 @@
+# AIUB Portal - Developed by Md Rijoan Maruf (https://rijoan.com)
+# Last updated: 2025-10-31
+
+User-agent: *
+Allow: /
+
+# Block access to sensitive areas
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/
+Disallow: /static/
+
+# Allow important pages
+Allow: /
+Allow: /courses
+Allow: /grade-report
+
+# Sitemap
+Sitemap: https://aiub.rijoan.com/sitemap.xml
+
+# Crawl delay (optional)
+Crawl-delay: 1

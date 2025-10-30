@@ -60,14 +60,20 @@ const Courses = async () => {
               </div>
             </div>
 
-            {/* Right - Back Button */}
+            {/* Right - Login Button */}
             <Link
-              href="/home"
-              className="flex items-center space-x-2 px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-150 rounded-lg shadow-sm"
+              href="/"
+              className="group relative bg-linear-to-r from-blue-600 via-indigo-600 to-blue-700 text-white px-4 py-2.5 rounded-xl font-semibold hover:from-blue-700 hover:via-indigo-700 hover:to-blue-800 active:scale-95 transition-all duration-300 shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40 flex items-center gap-2 overflow-hidden"
             >
-              <FiArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span className="hidden sm:inline text-sm">Back to Home</span>
-              <span className="sm:hidden text-sm">Back</span>
+              {/* Animated background effect */}
+              <div className="absolute inset-0 bg-linear-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+              <FiArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 relative z-10 transition-transform group-hover:-translate-x-1" />
+              <span className="hidden sm:inline text-sm relative z-10">Login to Portal</span>
+              <span className="sm:hidden text-sm relative z-10">Login</span>
+
+              {/* Glow effect */}
+              <div className="absolute inset-0 rounded-xl bg-linear-to-r from-blue-400/20 via-indigo-400/20 to-purple-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </Link>
           </div>
         </div>

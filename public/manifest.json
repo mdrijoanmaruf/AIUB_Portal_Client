@@ -1,0 +1,85 @@
+{
+  "name": "AIUB Portal",
+  "short_name": "AIUB Portal",
+  "description": "Official student portal for American International University-Bangladesh",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en-US",
+  "categories": ["education", "productivity"],
+  "developer": {
+    "name": "Md Rijoan Maruf",
+    "url": "https://rijoan.com"
+  },
+  "icons": [
+    {
+      "src": "/aiub.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "AIUB Portal Mobile View"
+    },
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "AIUB Portal Desktop View"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Grade Report",
+      "short_name": "Grades",
+      "description": "View your grade report",
+      "url": "/grade-report",
+      "icons": [
+        {
+          "src": "/aiub.svg",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Course Planner",
+      "short_name": "Courses",
+      "description": "Plan your courses",
+      "url": "/courses",
+      "icons": [
+        {
+          "src": "/aiub.svg",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
+}

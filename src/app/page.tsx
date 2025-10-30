@@ -310,6 +310,18 @@ export default function Home() {
                 )}
               </button>
 
+              {/* Course Planner Button */}
+              <button
+                type="button"
+                onClick={() => router.push('/course-routine')}
+                className="w-full bg-emerald-600 text-white py-3.5 px-6 rounded-xl font-semibold hover:bg-emerald-700 active:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center shadow-lg shadow-emerald-600/30"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                Access Course Planner
+              </button>
+
               {/* Footer Info */}
               <p className="text-center text-xs text-red-500 pt-2">
                 This is now under development. Don't Login now.
