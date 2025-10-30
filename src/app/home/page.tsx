@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar/Navbar'
 import Loading from './loading'
 import { prefetchAllData } from '@/lib/prefetch'
 import Footer from '@/components/Footer/Footer'
+import { motion } from 'framer-motion'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'
 
@@ -323,9 +324,18 @@ const Home = () => {
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header Section */}
-        <div className="mb-8">
+        <motion.div 
+          className="mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-            <div>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
               <h1 className="text-3xl font-bold text-blue-900 mb-2">
                 {userData.studentName || 'Student Portal'}
               </h1>
@@ -334,7 +344,7 @@ const Home = () => {
                 <span className="hidden sm:block text-gray-400">•</span>
                 <p className="text-gray-600 font-medium">{currentSemester?.text || 'Current Semester'}</p>
               </div>
-            </div>
+            </motion.div>
             {/* <button
               onClick={handleLogout}
               className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
@@ -348,7 +358,12 @@ const Home = () => {
 
           {/* Microsoft Teams Credentials */}
           {userData.teamsEmail && userData.teamsPassword && (
-            <div className="bg-linear-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-lg p-4 mb-6">
+            <motion.div 
+              className="bg-linear-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-lg p-4 mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
               <div className="flex items-start gap-3">
                 <div className="bg-indigo-100 rounded-lg p-2 mt-0.5">
                   <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -373,12 +388,21 @@ const Home = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Summary Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-linear-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4">
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-3 gap-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <motion.div 
+              className="bg-linear-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4"
+              whileHover={{ scale: 1.05, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 font-medium mb-1">Total Courses</p>
@@ -390,9 +414,13 @@ const Home = () => {
                   </svg>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="bg-linear-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4">
+            <motion.div 
+              className="bg-linear-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4"
+              whileHover={{ scale: 1.05, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 font-medium mb-1">Schedule Days</p>
@@ -404,9 +432,13 @@ const Home = () => {
                   </svg>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="bg-linear-to-br from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-lg p-4">
+            <motion.div 
+              className="bg-linear-to-br from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-lg p-4"
+              whileHover={{ scale: 1.05, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 font-medium mb-1">Today's Classes</p>
@@ -420,14 +452,18 @@ const Home = () => {
                   </svg>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
 
         {/* Main Content Sections */}
         <div className="space-y-8">
           {/* Class Schedule Section */}
-          <div>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+          >
             <h2 className="text-2xl font-bold bg-linear-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent mb-4 flex items-center gap-2">
               <svg className="w-6 h-6 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -437,7 +473,14 @@ const Home = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {userData.classSchedule.slice(0, cardsToShow).map((schedule, index) => (
-                  <div key={index} className="bg-gray-50/80 backdrop-blur-sm border-2 border-cyan-200/50 rounded-xl overflow-hidden hover:border-cyan-400/70 transition-all duration-300">
+                  <motion.div 
+                    key={index} 
+                    className="bg-gray-50/80 backdrop-blur-sm border-2 border-cyan-200/50 rounded-xl overflow-hidden hover:border-cyan-400/70 transition-all duration-300"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.4, delay: 0.6 + index * 0.1 }}
+                    whileHover={{ y: -5, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}
+                  >
                     <div className="bg-linear-to-r from-cyan-100/80 to-blue-100/80 border-b-2 border-cyan-300/50 px-4 py-3">
                       <h3 className="font-bold text-base text-cyan-700 flex items-center gap-2">
                         <span className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse"></span>
@@ -572,13 +615,17 @@ const Home = () => {
                         <p className="text-gray-500 italic text-sm">No classes scheduled</p>
                       </div>
                     )}
-                  </div>
+                  </motion.div>
                 ))}
               </div>
-          </div>
+          </motion.div>
 
           {/* Registered Courses Section */}
-          <div>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
+          >
             <h2 className="text-2xl font-bold bg-linear-to-r from-violet-500 to-purple-600 bg-clip-text text-transparent mb-4 flex items-center gap-2">
               <svg className="w-6 h-6 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -588,7 +635,14 @@ const Home = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {userData.registration.courses.filter(c => c.status !== 'Dropped').slice(0, cardsToShow).map((course, index) => (
-                  <div key={index} className="bg-gray-50/80 backdrop-blur-sm border-2 border-violet-200/50 rounded-xl overflow-hidden hover:border-violet-400/70 transition-all duration-300">
+                  <motion.div 
+                    key={index} 
+                    className="bg-gray-50/80 backdrop-blur-sm border-2 border-violet-200/50 rounded-xl overflow-hidden hover:border-violet-400/70 transition-all duration-300"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.4, delay: 0.8 + index * 0.1 }}
+                    whileHover={{ y: -5, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}
+                  >
                     <div className="bg-linear-to-r from-violet-100/80 to-purple-100/80 border-b-2 border-violet-300/50 px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span className="w-2 h-2 bg-violet-500 rounded-full animate-pulse"></span>
@@ -660,10 +714,10 @@ const Home = () => {
                         ))}
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Semester Information */}

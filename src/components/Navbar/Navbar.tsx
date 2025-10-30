@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { useRouter, usePathname } from 'next/navigation'
-import { FaBook, FaClipboardList, FaChartBar, FaSignOutAlt, FaBars, FaTimes, FaHome } from 'react-icons/fa'
+import { FaBook, FaClipboardList, FaChartBar, FaSignOutAlt, FaBars, FaTimes, FaHome, FaWallet } from 'react-icons/fa'
 
 const Navbar = () => {
   const router = useRouter()
@@ -30,6 +30,7 @@ const Navbar = () => {
     { path: '/courses', label: 'Courses', icon: FaBook },
     { path: '/registration', label: 'Registration', icon: FaClipboardList },
     { path: '/grade-report', label: 'Grade Report', icon: FaChartBar },
+    { path: '/finance', label: 'Finance', icon: FaWallet },
   ]
 
   const isActive = (path: string) => pathname === path

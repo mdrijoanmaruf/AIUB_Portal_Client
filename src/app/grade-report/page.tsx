@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar/Navbar'
 import Loading from './loading'
 import { FaGraduationCap, FaBook, FaCalendar, FaStar, FaAward, FaChartLine, FaTrophy, FaFire, FaCalculator, FaSync } from 'react-icons/fa'
 import { getCachedGradeReport } from '@/lib/prefetch'
+import { motion } from 'framer-motion'
 import {
   LineChart,
   Line,
@@ -433,9 +434,18 @@ export default function GradeReportPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header Section */}
-        <div className="mb-8">
+        <motion.div 
+          className="mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-            <div>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
               <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
                 Academic Performance
                 {semesterData?.summary?.cgpa && parseFloat(semesterData.summary.cgpa) >= 3.5 && (
@@ -443,9 +453,14 @@ export default function GradeReportPage() {
                 )}
               </h1>
               <p className="text-gray-600 font-medium">Track your academic journey and achievements</p>
-            </div>
+            </motion.div>
             {semesterData?.summary?.cgpa && (
-              <div className="flex gap-4 items-center">
+              <motion.div 
+                className="flex gap-4 items-center"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
                 <div className="bg-white border border-gray-200 rounded-lg px-5 py-3">
                   <p className="text-sm text-gray-600 font-medium mb-1">CGPA</p>
                   <p className="text-3xl font-bold text-gray-900 flex items-center gap-2">
@@ -467,13 +482,18 @@ export default function GradeReportPage() {
                 >
                   <FaSync className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
                 </button>
-              </div>
+              </motion.div>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* Tab Navigation */}
-        <div className="bg-white rounded-lg border border-gray-200 mb-6 overflow-hidden">
+        <motion.div 
+          className="bg-white rounded-lg border border-gray-200 mb-6 overflow-hidden"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
           <div className="flex">
             <button
               onClick={() => setActiveTab('semester')}
@@ -526,11 +546,16 @@ export default function GradeReportPage() {
               )}
             </button>
           </div>
-        </div>
+        </motion.div>
 
         {/* Graph Tab Content */}
         {activeTab === 'graph' && graphData && (
-          <div className="space-y-6">
+          <motion.div 
+            className="space-y-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
             {/* Performance Metrics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-linear-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
@@ -578,114 +603,132 @@ export default function GradeReportPage() {
               </div>
             </div>
 
-            {/* GPA Trend Chart */}
-            <div className="bg-white rounded-lg border-2 border-blue-200 p-6">
-              <h3 className="text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
-                <FaChartLine className="w-5 h-5 text-blue-600" />
-                GPA Progression Over Time
-              </h3>
-              {graphData.gpaData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={350}>
-                  <AreaChart data={graphData.gpaData}>
-                    <defs>
-                      <linearGradient id="colorCgpa" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                      </linearGradient>
-                    </defs>
+            {/* Charts Grid - 2 columns */}
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+            >
+              {/* GPA Trend Chart */}
+              <motion.div 
+                className="bg-white rounded-lg border-2 border-blue-200 p-6"
+                whileHover={{ scale: 1.02, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <h3 className="text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
+                  <FaChartLine className="w-5 h-5 text-blue-600" />
+                  GPA Progression Over Time
+                </h3>
+                {graphData.gpaData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={350}>
+                    <AreaChart data={graphData.gpaData}>
+                      <defs>
+                        <linearGradient id="colorCgpa" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis 
+                        dataKey="semester" 
+                        tick={{fontSize: 11}} 
+                        angle={-45} 
+                        textAnchor="end" 
+                        height={100}
+                        interval={0}
+                      />
+                      <YAxis domain={[0, 4]} tick={{fontSize: 12}} />
+                      <Tooltip 
+                        contentStyle={{
+                          borderRadius: '8px', 
+                          border: '1px solid #e5e7eb',
+                          boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                        }}
+                        formatter={(value: any) => [`${value}`, 'CGPA']}
+                        // show full semester name in bold dark gray
+                        labelFormatter={(label: string, payload: any) => {
+                          const full = payload && payload[0] && payload[0].payload && payload[0].payload.full
+                          return full || label
+                        }}
+                        labelStyle={{ color: '#1f2937', fontWeight: 700 }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="cgpa" 
+                        stroke="#3b82f6" 
+                        fillOpacity={1} 
+                        fill="url(#colorCgpa)" 
+                        name="Semester CGPA" 
+                        strokeWidth={2}
+                        dot={{ r: 4, stroke: '#1f2937', strokeWidth: 1, fill: '#ffffff' }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-[350px] flex items-center justify-center text-gray-400">
+                    <p>No GPA data available yet</p>
+                  </div>
+                )}
+              </motion.div>
+
+              {/* Grade Trend Over Time */}
+              <motion.div 
+                className="bg-white rounded-lg border-2 border-purple-200 p-6"
+                whileHover={{ scale: 1.02, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <h3 className="text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
+                  <FaStar className="w-5 h-5 text-purple-600" />
+                  Grade Performance Trend (All Grades)
+                </h3>
+                <ResponsiveContainer width="100%" height={320}>
+                  <BarChart data={graphData.gradeTrend}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis 
                       dataKey="semester" 
-                      tick={{fontSize: 11}} 
+                      tick={{fontSize: 10, fill: '#1f2937'}} 
                       angle={-45} 
                       textAnchor="end" 
                       height={100}
                       interval={0}
                     />
-                    <YAxis domain={[0, 4]} tick={{fontSize: 12}} />
+                    <YAxis tick={{fontSize: 11}} />
                     <Tooltip 
                       contentStyle={{
                         borderRadius: '8px', 
                         border: '1px solid #e5e7eb',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                        backgroundColor: '#ffffff'
                       }}
-                      formatter={(value: any) => [`${value}`, 'CGPA']}
-                      // show full semester name in bold dark gray
-                      labelFormatter={(label: string, payload: any) => {
-                        const full = payload && payload[0] && payload[0].payload && payload[0].payload.full
-                        return full || label
+                      labelStyle={{
+                        color: '#1f2937',
+                        fontWeight: 'bold',
+                        fontSize: '13px'
                       }}
-                      labelStyle={{ color: '#1f2937', fontWeight: 700 }}
                     />
-                    <Area 
-                      type="monotone" 
-                      dataKey="cgpa" 
-                      stroke="#3b82f6" 
-                      fillOpacity={1} 
-                      fill="url(#colorCgpa)" 
-                      name="Semester CGPA" 
-                      strokeWidth={2}
-                      dot={{ r: 4, stroke: '#1f2937', strokeWidth: 1, fill: '#ffffff' }}
-                    />
-                  </AreaChart>
+                    <Bar dataKey="A+" stackId="a" fill="#16a34a" />
+                    <Bar dataKey="A" stackId="a" fill="#22c55e" />
+                    <Bar dataKey="A-" stackId="a" fill="#3b82f6" />
+                    <Bar dataKey="B+" stackId="a" fill="#2563eb" />
+                    <Bar dataKey="B" stackId="a" fill="#6366f1" />
+                    <Bar dataKey="B-" stackId="a" fill="#8b5cf6" />
+                    <Bar dataKey="C+" stackId="a" fill="#eab308" />
+                    <Bar dataKey="C" stackId="a" fill="#f59e0b" />
+                    <Bar dataKey="C-" stackId="a" fill="#f97316" />
+                    <Bar dataKey="D+" stackId="a" fill="#fb923c" />
+                    <Bar dataKey="D" stackId="a" fill="#f87171" />
+                    <Bar dataKey="D-" stackId="a" fill="#ef4444" />
+                    <Bar dataKey="F" stackId="a" fill="#dc2626" radius={[4, 4, 0, 0]} />
+                  </BarChart>
                 </ResponsiveContainer>
-              ) : (
-                <div className="h-[350px] flex items-center justify-center text-gray-400">
-                  <p>No GPA data available yet</p>
-                </div>
-              )}
-            </div>
+              </motion.div>
 
-            {/* Grade Trend Over Time */}
-            <div className="bg-white rounded-lg border-2 border-purple-200 p-6">
-              <h3 className="text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
-                <FaStar className="w-5 h-5 text-purple-600" />
-                Grade Performance Trend (All Grades)
-              </h3>
-              <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={graphData.gradeTrend}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis 
-                    dataKey="semester" 
-                    tick={{fontSize: 10, fill: '#1f2937'}} 
-                    angle={-45} 
-                    textAnchor="end" 
-                    height={100}
-                    interval={0}
-                  />
-                  <YAxis tick={{fontSize: 11}} />
-                  <Tooltip 
-                    contentStyle={{
-                      borderRadius: '8px', 
-                      border: '1px solid #e5e7eb',
-                      backgroundColor: '#ffffff'
-                    }}
-                    labelStyle={{
-                      color: '#1f2937',
-                      fontWeight: 'bold',
-                      fontSize: '13px'
-                    }}
-                  />
-                  <Bar dataKey="A+" stackId="a" fill="#16a34a" />
-                  <Bar dataKey="A" stackId="a" fill="#22c55e" />
-                  <Bar dataKey="A-" stackId="a" fill="#3b82f6" />
-                  <Bar dataKey="B+" stackId="a" fill="#2563eb" />
-                  <Bar dataKey="B" stackId="a" fill="#6366f1" />
-                  <Bar dataKey="B-" stackId="a" fill="#8b5cf6" />
-                  <Bar dataKey="C+" stackId="a" fill="#eab308" />
-                  <Bar dataKey="C" stackId="a" fill="#f59e0b" />
-                  <Bar dataKey="C-" stackId="a" fill="#f97316" />
-                  <Bar dataKey="D+" stackId="a" fill="#fb923c" />
-                  <Bar dataKey="D" stackId="a" fill="#f87171" />
-                  <Bar dataKey="D-" stackId="a" fill="#ef4444" />
-                  <Bar dataKey="F" stackId="a" fill="#dc2626" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Grade Distribution */}
-              <div className="bg-white rounded-lg border-2 border-indigo-200 p-6">
+              <motion.div 
+                className="bg-white rounded-lg border-2 border-indigo-200 p-6"
+                whileHover={{ scale: 1.02, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
                 <h3 className="text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
                   <FaAward className="w-5 h-5 text-indigo-600" />
                   Overall Grade Distribution
@@ -714,10 +757,14 @@ export default function GradeReportPage() {
                     />
                   </PieChart>
                 </ResponsiveContainer>
-              </div>
+              </motion.div>
 
               {/* Credits per Semester */}
-              <div className="bg-white rounded-lg border-2 border-purple-200 p-6">
+              <motion.div 
+                className="bg-white rounded-lg border-2 border-purple-200 p-6"
+                whileHover={{ scale: 1.02, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
                 <h3 className="text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
                   <FaBook className="w-5 h-5 text-purple-600" />
                   Credits Earned per Semester
@@ -752,35 +799,39 @@ export default function GradeReportPage() {
                     <p>No credits data available</p>
                   </div>
                 )}
-              </div>
-            </div>
+              </motion.div>
 
-            {/* Courses per Semester - Full Width */}
-            <div className="bg-white rounded-lg border-2 border-green-200 p-6">
-              <h3 className="text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
-                <FaCalendar className="w-5 h-5 text-green-600" />
-                Courses per Semester
-              </h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={graphData.coursesData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis 
-                    dataKey="semester" 
-                    tick={{fontSize: 10}} 
-                    angle={-45} 
-                    textAnchor="end" 
-                    height={80}
-                    interval={0}
-                  />
-                  <YAxis tick={{fontSize: 11}} />
-                  <Tooltip contentStyle={{borderRadius: '8px', border: '1px solid #e5e7eb'}} labelStyle={{ color: '#1f2937', fontWeight: 700 }} />
-                  <Legend wrapperStyle={{paddingTop: '15px'}} />
-                  <Bar dataKey="courses" fill="#10b981" radius={[4, 4, 0, 0]} name="Total Courses" />
-                  <Bar dataKey="completed" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Completed" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+              {/* Courses per Semester - Full Width in Grid */}
+              <motion.div 
+                className="md:col-span-2 bg-white rounded-lg border-2 border-green-200 p-6"
+                whileHover={{ scale: 1.01, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <h3 className="text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
+                  <FaCalendar className="w-5 h-5 text-green-600" />
+                  Courses per Semester
+                </h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={graphData.coursesData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="semester" 
+                      tick={{fontSize: 10}} 
+                      angle={-45} 
+                      textAnchor="end" 
+                      height={80}
+                      interval={0}
+                    />
+                    <YAxis tick={{fontSize: 11}} />
+                    <Tooltip contentStyle={{borderRadius: '8px', border: '1px solid #e5e7eb'}} labelStyle={{ color: '#1f2937', fontWeight: 700 }} />
+                    <Legend wrapperStyle={{paddingTop: '15px'}} />
+                    <Bar dataKey="courses" fill="#10b981" radius={[4, 4, 0, 0]} name="Total Courses" />
+                    <Bar dataKey="completed" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Completed" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </motion.div>
+            </motion.div>
+          </motion.div>
         )}
 
         {/* Curriculum & Semester Tabs Content */}
@@ -809,7 +860,14 @@ export default function GradeReportPage() {
             {/* Semesters */}
             <div className="space-y-6">
               {currentData?.semesters?.map((semester, index) => (
-                <div key={index} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <motion.div 
+                  key={index} 
+                  className="bg-white rounded-lg border border-gray-200 overflow-hidden"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 * index }}
+                  whileHover={{ scale: 1.01, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
+                >
                   {/* Semester Header */}
                   <div className={`bg-linear-to-r ${
                     index % 4 === 0 ? 'from-blue-50 to-indigo-50 border-blue-200' :
@@ -980,7 +1038,7 @@ export default function GradeReportPage() {
                       </tfoot>
                     </table>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </>
