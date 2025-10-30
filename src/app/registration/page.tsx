@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import Navbar from '@/components/Navbar/Navbar'
 import Loading from '../home/loading'
 import Footer from '@/components/Footer/Footer'
+import { cacheManager, initAutoLogout } from '@/lib/cacheManager'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'
 
@@ -86,6 +87,9 @@ const Registration = () => {
   const [cardsToShow, setCardsToShow] = useState<number>(6)
 
   useEffect(() => {
+    // Initialize cache management and auto logout
+    initAutoLogout(router)
+    
     fetchRegistrationData()
 
     // Responsive card count: desktop -> 6, mobile -> 4
@@ -115,26 +119,14 @@ const Registration = () => {
         return
       }
 
-      // Check if data is cached
-      const cachedData = localStorage.getItem('registrationData')
-      const cacheTimestamp = localStorage.getItem('registrationTimestamp')
-
-      if (cachedData && cacheTimestamp) {
-        const age = Date.now() - parseInt(cacheTimestamp)
-        // Cache for 10 minutes (600000 ms)
-        if (age < 600000) {
-          try {
-            const parsedCache = JSON.parse(cachedData)
-            if (parsedCache && parsedCache.studentInfo) {
-              console.log('Using cached registration data')
-              setRegistrationData(parsedCache)
-              setLoading(false)
-              return
-            }
-          } catch (error) {
-            console.error('Error parsing cached registration data:', error)
-          }
-        }
+      // Check if data is cached with new cache manager
+      const cachedRegistrationData = cacheManager.getCache('registrationData')
+      
+      if (cachedRegistrationData && cachedRegistrationData.studentInfo) {
+        console.log('Using cached registration data')
+        setRegistrationData(cachedRegistrationData)
+        setLoading(false)
+        return
       }
 
       // Fetch fresh data if no valid cache
@@ -164,10 +156,15 @@ const Registration = () => {
         
         setRegistrationData(result.data)
 
-        // Cache the registration data
+        // Cache the registration data with 5-minute expiry
         try {
-          localStorage.setItem('registrationData', JSON.stringify(result.data))
-          localStorage.setItem('registrationTimestamp', Date.now().toString())
+          cacheManager.setCache('registrationData', result.data, {
+            maxAge: 5 * 60 * 1000, // 5 minutes
+            onExpiry: () => {
+              console.log('Registration data cache expired - logging out')
+              cacheManager.autoLogout()
+            }
+          })
         } catch (error) {
           console.error('Error caching registration data:', error)
         }
@@ -228,18 +225,36 @@ const Registration = () => {
           transition={{ duration: 0.5 }}
         >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Registration Portal
-              </h1>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                <p className="text-gray-600 font-medium">Student: {registrationData.studentInfo.name}</p>
-                <span className="hidden sm:block text-gray-400">•</span>
-                <p className="text-gray-600 font-medium">ID: {registrationData.studentInfo.id}</p>
-                <span className="hidden sm:block text-gray-400">•</span>
-                <p className="text-gray-600 font-medium">{currentSemester?.text || 'Current Semester'}</p>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="w-full"
+            >
+              <div className="bg-linear-to-r from-sky-50 to-indigo-50 border border-indigo-100 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <div>
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Registration Portal</h1>
+                    <p className="text-sm text-gray-600 mt-1">{registrationData.studentInfo?.name} • ID: {registrationData.studentInfo?.id} • {currentSemester?.text || 'Current Semester'}</p>
+                  </div>
+                </div>
+
+                <div className="hidden sm:flex sm:gap-6 items-center">
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500">Registered</p>
+                    <p className="text-sm font-bold text-gray-900">{activeCourses.length}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500">Semesters</p>
+                    <p className="text-sm font-bold text-gray-900">{registrationData.semesters.length}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500">Balance</p>
+                    <p className="text-sm font-bold text-gray-900">৳{registrationData.paymentInfo.summary.balance || '0.00'}</p>
+                  </div>
+                </div>
               </div>
-            </div>
+            </motion.div>
           </div>
 
           {/* Summary Stats */}

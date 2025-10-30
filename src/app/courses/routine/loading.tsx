@@ -30,7 +30,7 @@ export default function Loading() {
           {Array.from({ length: 6 }).map((_, idx) => (
             <div key={idx} className="animate-pulse bg-white rounded-lg border border-gray-200 p-4">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-gray-200 rounded-lg flex-shrink-0" />
+                <div className="w-12 h-12 bg-gray-200 rounded-lg " />
                 <div className="flex-1 space-y-2">
                   <div className="w-3/4 h-4 bg-gray-200 rounded" />
                   <div className="w-1/2 h-3 bg-gray-200 rounded" />

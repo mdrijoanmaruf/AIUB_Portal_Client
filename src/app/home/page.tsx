@@ -7,6 +7,7 @@ import Loading from './loading'
 import { prefetchAllData } from '@/lib/prefetch'
 import Footer from '@/components/Footer/Footer'
 import { motion } from 'framer-motion'
+import { cacheManager, initAutoLogout } from '@/lib/cacheManager'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'
 
@@ -158,6 +159,9 @@ const Home = () => {
   const [cardsToShow, setCardsToShow] = useState<number>(6)
 
   useEffect(() => {
+    // Initialize cache management and auto logout
+    initAutoLogout(router)
+    
     fetchUserData()
     
     // Update current time every second for live timer
@@ -196,39 +200,27 @@ const Home = () => {
         return
       }
 
-      // Check if data is cached
-      const cachedUserData = localStorage.getItem('userData')
-      const cacheTimestamp = localStorage.getItem('userDataTimestamp')
+      // Check if data is cached with new cache manager
+      const cachedUserData = cacheManager.getCache('userData')
       
-      if (cachedUserData && cacheTimestamp) {
-        const age = Date.now() - parseInt(cacheTimestamp)
-        // Cache for 10 minutes (600000 ms) - shorter duration for user data
-        if (age < 600000) {
-          try {
-            const parsedCache = JSON.parse(cachedUserData)
-            if (parsedCache && parsedCache.studentId) {
-              console.log('Using cached user data')
-              setUserData(parsedCache)
-              setLoading(false)
-              
-              // 🚀 Prefetch data silently in background (no UI indicator)
-              prefetchAllData(token).then(result => {
-                if (result.success) {
-                  console.log('🎉 All data successfully prefetched:', result.cached.join(', '))
-                } else if (result.cached.length > 0) {
-                  console.log('✅ Prefetched:', result.cached.join(', '))
-                  console.warn('⚠️ Failed:', result.failed.join(', '))
-                }
-              }).catch(error => {
-                console.error('❌ Prefetch error:', error)
-              })
-              
-              return
-            }
-          } catch (error) {
-            console.error('Error parsing cached user data:', error)
+      if (cachedUserData && cachedUserData.studentId) {
+        console.log('Using cached user data')
+        setUserData(cachedUserData)
+        setLoading(false)
+        
+        // 🚀 Prefetch data silently in background (no UI indicator)
+        prefetchAllData(token).then(result => {
+          if (result.success) {
+            console.log('🎉 All data successfully prefetched:', result.cached.join(', '))
+          } else if (result.cached.length > 0) {
+            console.log('✅ Prefetched:', result.cached.join(', '))
+            console.warn('⚠️ Failed:', result.failed.join(', '))
           }
-        }
+        }).catch(error => {
+          console.error('❌ Prefetch error:', error)
+        })
+        
+        return
       }
       
       // Fetch fresh data if no valid cache
@@ -243,10 +235,15 @@ const Home = () => {
       if (result.success && result.data) {
         setUserData(result.data)
         
-        // Cache the user data
+        // Cache the user data with 5-minute expiry
         try {
-          localStorage.setItem('userData', JSON.stringify(result.data))
-          localStorage.setItem('userDataTimestamp', Date.now().toString())
+          cacheManager.setCache('userData', result.data, {
+            maxAge: 5 * 60 * 1000, // 5 minutes
+            onExpiry: () => {
+              console.log('User data cache expired - logging out')
+              cacheManager.autoLogout()
+            }
+          })
         } catch (error) {
           console.error('Error caching user data:', error)
         }
@@ -285,18 +282,8 @@ const Home = () => {
   }
 
   const handleLogout = () => {
-    // Clear localStorage - including cache
-    localStorage.removeItem('userData')
-    localStorage.removeItem('authToken')
-    localStorage.removeItem('userDataTimestamp')
-    localStorage.removeItem('allCourseSections')
-    localStorage.removeItem('allCourseSectionsTimestamp')
-    localStorage.removeItem('courseNames')
-    localStorage.removeItem('courseNamesTimestamp')
-    localStorage.removeItem('gradeReportData')
-    localStorage.removeItem('gradeReportTimestamp')
-    // Redirect to login
-    router.push('/')
+    // Use cache manager to clear all caches and logout
+    cacheManager.autoLogout()
   }
 
   if (loading) {
@@ -335,14 +322,31 @@ const Home = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
+              className="w-full"
             >
-              <h1 className="text-3xl font-bold text-blue-900 mb-2">
-                {userData.studentName || 'Student Portal'}
-              </h1>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                <p className="text-gray-600 font-medium">ID: {userData.studentId}</p>
-                <span className="hidden sm:block text-gray-400">•</span>
-                <p className="text-gray-600 font-medium">{currentSemester?.text || 'Current Semester'}</p>
+              <div className="bg-linear-to-r from-sky-50 to-indigo-50 border border-indigo-100 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full bg-indigo-600 text-white flex items-center justify-center text-lg font-bold">
+                    {userData.studentName ? userData.studentName.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase() : 'SP'}
+                  </div>
+                  <div>
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Welcome back, {userData.studentName ? userData.studentName.trim().split(' ').slice(-1)[0] : 'Student'}</h1>
+                    <p className="text-sm text-gray-600 mt-1">ID: {userData.studentId} • {currentSemester?.text || 'Current Semester'}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="hidden sm:flex sm:gap-4">
+                    <div className="text-center">
+                      <p className="text-xs text-gray-500">Courses</p>
+                      <p className="text-sm font-bold text-gray-900">{userData.registration.courses.filter(c => c.status !== 'Dropped').length}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-gray-500">Today's Classes</p>
+                      <p className="text-sm font-bold text-gray-900">{userData.classSchedule[0]?.classes.filter(c => c.courseName !== 'No Class On This Day').length || 0}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </motion.div>
             {/* <button

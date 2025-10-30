@@ -7,6 +7,7 @@ import Loading from './loading'
 import { FaGraduationCap, FaBook, FaCalendar, FaStar, FaAward, FaChartLine, FaTrophy, FaFire, FaCalculator, FaSync } from 'react-icons/fa'
 import { getCachedGradeReport } from '@/lib/prefetch'
 import { motion } from 'framer-motion'
+import { cacheManager, initAutoLogout } from '@/lib/cacheManager'
 import {
   LineChart,
   Line,
@@ -76,6 +77,8 @@ export default function GradeReportPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    // Initialize cache management and auto logout
+    initAutoLogout(router)
     fetchGradeReports()
   }, [])
 
@@ -148,9 +151,18 @@ export default function GradeReportPage() {
           timestamp: now
         }
 
-        // Also cache in localStorage
-        localStorage.setItem('gradeReportData', JSON.stringify(result.data))
-        localStorage.setItem('gradeReportTimestamp', now.toString())
+        // Cache with new cache manager with 5-minute expiry
+        try {
+          cacheManager.setCache('gradeReportData', result.data, {
+            maxAge: 5 * 60 * 1000, // 5 minutes
+            onExpiry: () => {
+              console.log('Grade report data cache expired - logging out')
+              cacheManager.autoLogout()
+            }
+          })
+        } catch (error) {
+          console.error('Error caching grade report data:', error)
+        }
         
         setCurriculumData(result.data.byCurriculum)
         setSemesterData(result.data.bySemester)

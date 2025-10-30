@@ -3,6 +3,8 @@
  * Automatically prefetch and cache API data for better UX
  */
 
+import { cacheManager } from './cacheManager'
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
@@ -201,17 +203,7 @@ export async function prefetchAllData(authToken: string): Promise<PrefetchResult
  * Get cached grade report data
  */
 export function getCachedGradeReport() {
-  const cachedData = localStorage.getItem('gradeReportData')
-  const cacheTimestamp = localStorage.getItem('gradeReportTimestamp')
-  
-  if (cachedData && cacheTimestamp) {
-    const age = Date.now() - parseInt(cacheTimestamp)
-    if (age < CACHE_DURATION) {
-      return JSON.parse(cachedData)
-    }
-  }
-  
-  return null
+  return cacheManager.getCache('gradeReportData')
 }
 
 /**
