@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Navbar from '@/components/Navbar/Navbar'
 import Loading from './loading'
+import PrefetchIndicator from '@/components/PrefetchIndicator'
+import { prefetchAllData } from '@/lib/prefetch'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'
 
@@ -153,6 +155,19 @@ const Home = () => {
   const [error, setError] = useState('')
   const [currentTime, setCurrentTime] = useState(new Date())
   const [cardsToShow, setCardsToShow] = useState<number>(6)
+  
+  // Prefetch indicator state
+  const [prefetchStatus, setPrefetchStatus] = useState<{
+    show: boolean
+    status: 'loading' | 'success' | 'partial' | 'hidden'
+    cached: string[]
+    failed: string[]
+  }>({
+    show: false,
+    status: 'hidden',
+    cached: [],
+    failed: []
+  })
 
   useEffect(() => {
     fetchUserData()
@@ -207,6 +222,23 @@ const Home = () => {
               console.log('Using cached user data')
               setUserData(parsedCache)
               setLoading(false)
+              
+              // 🚀 Prefetch data even when using cached user data (in background)
+              setPrefetchStatus({ show: true, status: 'loading', cached: [], failed: [] })
+              prefetchAllData(token).then(result => {
+                if (result.success) {
+                  console.log('🎉 All data successfully prefetched:', result.cached.join(', '))
+                  setPrefetchStatus({ show: true, status: 'success', cached: result.cached, failed: [] })
+                } else if (result.cached.length > 0) {
+                  console.log('✅ Prefetched:', result.cached.join(', '))
+                  console.warn('⚠️ Failed:', result.failed.join(', '))
+                  setPrefetchStatus({ show: true, status: 'partial', cached: result.cached, failed: result.failed })
+                }
+              }).catch(error => {
+                console.error('❌ Prefetch error:', error)
+                setPrefetchStatus({ show: false, status: 'hidden', cached: [], failed: [] })
+              })
+              
               return
             }
           } catch (error) {
@@ -234,6 +266,22 @@ const Home = () => {
         } catch (error) {
           console.error('Error caching user data:', error)
         }
+
+        // 🚀 AUTOMATIC DATA PREFETCH - Prefetch all page data in background
+        // This runs asynchronously without blocking the UI
+        setPrefetchStatus({ show: true, status: 'loading', cached: [], failed: [] })
+        prefetchAllData(token).then(result => {
+          if (result.success) {
+            console.log('🎉 All data successfully prefetched:', result.cached.join(', '))
+            setPrefetchStatus({ show: true, status: 'success', cached: result.cached, failed: [] })
+          } else {
+            console.warn('⚠️ Some data failed to prefetch:', result.failed.join(', '))
+            setPrefetchStatus({ show: true, status: 'partial', cached: result.cached, failed: result.failed })
+          }
+        }).catch(error => {
+          console.error('❌ Prefetch error:', error)
+          setPrefetchStatus({ show: false, status: 'hidden', cached: [], failed: [] })
+        })
       } else {
         // Token invalid or expired, redirect to login
         localStorage.removeItem('authToken')
@@ -265,6 +313,8 @@ const Home = () => {
     localStorage.removeItem('allCourseSectionsTimestamp')
     localStorage.removeItem('courseNames')
     localStorage.removeItem('courseNamesTimestamp')
+    localStorage.removeItem('gradeReportData')
+    localStorage.removeItem('gradeReportTimestamp')
     // Redirect to login
     router.push('/')
   }
@@ -292,6 +342,15 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-indigo-50">
       <Navbar />
+      
+      {/* Prefetch Status Indicator */}
+      <PrefetchIndicator 
+        show={prefetchStatus.show}
+        status={prefetchStatus.status}
+        cached={prefetchStatus.cached}
+        failed={prefetchStatus.failed}
+      />
+      
       <div className="max-w-7xl mx-auto  md:p-8">
         {/* Classic Header with Glassmorphism */}
         <div className="bg-white/80 backdrop-blur-xl  overflow-hidden border border-gray-200/50 mb-6">

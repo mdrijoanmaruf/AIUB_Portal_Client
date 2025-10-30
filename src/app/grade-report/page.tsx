@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar/Navbar'
 import Loading from './loading'
 import { FaGraduationCap, FaBook, FaCalendar, FaStar, FaAward, FaChartLine, FaTrophy, FaFire, FaCalculator, FaSync } from 'react-icons/fa'
+import { getCachedGradeReport } from '@/lib/prefetch'
 import {
   LineChart,
   Line,
@@ -81,7 +82,27 @@ export default function GradeReportPage() {
       setLoading(true)
       setError('')
 
-      // Check cache first (unless force refresh)
+      // Check localStorage cache first (from prefetch)
+      if (!forceRefresh) {
+        const cachedData = getCachedGradeReport()
+        if (cachedData) {
+          console.log('📊 Using prefetched grade report data from localStorage')
+          setCurriculumData(cachedData.byCurriculum)
+          setSemesterData(cachedData.bySemester)
+          
+          // Also update global cache
+          gradeReportCache = {
+            curriculumData: cachedData.byCurriculum,
+            semesterData: cachedData.bySemester,
+            timestamp: Date.now()
+          }
+          
+          setLoading(false)
+          return
+        }
+      }
+
+      // Check global cache second (unless force refresh)
       const now = Date.now()
       if (!forceRefresh && gradeReportCache && (now - gradeReportCache.timestamp) < CACHE_DURATION) {
         console.log('📊 Using cached grade report data (cache age:', Math.round((now - gradeReportCache.timestamp) / 1000), 'seconds)')
@@ -118,12 +139,16 @@ export default function GradeReportPage() {
         console.log('Curriculum Semesters:', result.data.byCurriculum?.semesters?.length || 0)
         console.log('Semester Semesters:', result.data.bySemester?.semesters?.length || 0)
         
-        // Cache the data
+        // Cache the data in global cache
         gradeReportCache = {
           curriculumData: result.data.byCurriculum,
           semesterData: result.data.bySemester,
           timestamp: now
         }
+
+        // Also cache in localStorage
+        localStorage.setItem('gradeReportData', JSON.stringify(result.data))
+        localStorage.setItem('gradeReportTimestamp', now.toString())
         
         setCurriculumData(result.data.byCurriculum)
         setSemesterData(result.data.bySemester)
