@@ -62,11 +62,11 @@ const Courses = async () => {
 
             {/* Right - Back Button */}
             <Link
-              href="/dashboard"
+              href="/home"
               className="flex items-center space-x-2 px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-150 rounded-lg shadow-sm"
             >
               <FiArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span className="hidden sm:inline text-sm">Back to Dashboard</span>
+              <span className="hidden sm:inline text-sm">Back to Home</span>
               <span className="sm:hidden text-sm">Back</span>
             </Link>
           </div>

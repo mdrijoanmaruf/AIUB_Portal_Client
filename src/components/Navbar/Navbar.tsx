@@ -107,15 +107,18 @@ const Navbar = () => {
         <div className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
           isMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         }`}>
-          <div className="border-t border-blue-100 bg-white/95 backdrop-blur-md">
+          <div className="border-t border-blue-100 bg-white/95 backdrop-blur-md relative z-50">
             <div className="px-2 pt-2 pb-3 space-y-1">
               {navigationItems.map((item) => {
                 const Icon = item.icon
                 return (
                   <button
                     key={item.path}
-                    onClick={() => router.push(item.path)}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 ${
+                    onClick={() => {
+                      router.push(item.path)
+                      setIsMenuOpen(false)
+                    }}
+                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 touch-manipulation ${
                       isActive(item.path)
                         ? 'text-blue-600 bg-blue-50 shadow-md'
                         : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'

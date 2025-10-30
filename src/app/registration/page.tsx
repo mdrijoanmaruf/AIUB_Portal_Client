@@ -1,8 +1,11 @@
+import Navbar from '@/components/Navbar/Navbar'
 import React from 'react'
 
 const Registration = () => {
   return (
-    <div>Registration</div>
+    <div>
+      <Navbar/>
+    </div>
   )
 }
 
