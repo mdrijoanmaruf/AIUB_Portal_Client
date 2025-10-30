@@ -28,6 +28,7 @@ import {
   Area,
   AreaChart
 } from 'recharts'
+import Footer from '@/components/Footer/Footer'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'
 
@@ -427,116 +428,101 @@ export default function GradeReportPage() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Responsive Header with Solid Background */}
-        <div className="relative bg-blue-600 rounded-xl shadow-xl p-4 sm:p-6 mb-4 sm:mb-6 overflow-hidden">
-          {/* Subtle Animated Background */}
-          <div className="absolute inset-0 bg-blue-500/10 animate-pulse"></div>
-
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center shadow-md">
-                <FaGraduationCap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-              </div>
-              <div className="text-white">
-                <h1 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2">
-                  <span className="hidden sm:inline">Academic Performance</span>
-                  <span className="sm:hidden">Performance</span>
-                  <FaTrophy className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-300 animate-bounce" />
-                </h1>
-                <p className="text-blue-100 text-xs sm:text-sm hidden sm:block">Track your academic journey and achievements</p>
-              </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                Academic Performance
+                {semesterData?.summary?.cgpa && parseFloat(semesterData.summary.cgpa) >= 3.5 && (
+                  <FaTrophy className="w-6 h-6 text-yellow-500" />
+                )}
+              </h1>
+              <p className="text-gray-600 font-medium">Track your academic journey and achievements</p>
             </div>
-
-            {/* Responsive Quick Stats */}
             {semesterData?.summary?.cgpa && (
-              <div className="flex gap-3 sm:gap-4 bg-white/10 backdrop-blur-md rounded-lg px-3 sm:px-4 py-2 sm:py-3 shadow-md self-start sm:self-auto">
-                <div className="text-center">
-                  <p className="text-xs text-blue-200 font-medium mb-1">CGPA</p>
-                  <p className="text-xl sm:text-2xl font-bold text-white flex items-center gap-1">
+              <div className="flex gap-4 items-center">
+                <div className="bg-white border border-gray-200 rounded-lg px-5 py-3">
+                  <p className="text-sm text-gray-600 font-medium mb-1">CGPA</p>
+                  <p className="text-3xl font-bold text-gray-900 flex items-center gap-2">
                     {semesterData.summary.cgpa}
-                    {parseFloat(semesterData.summary.cgpa) >= 3.5 && <FaFire className="w-3 h-3 sm:w-4 sm:h-4 text-orange-400" />}
+                    {parseFloat(semesterData.summary.cgpa) >= 3.5 && <FaFire className="w-5 h-5 text-orange-500" />}
                   </p>
                 </div>
                 {semesterData.summary.completedCredits && (
-                  <div className="text-center border-l border-white/20 pl-3 sm:pl-4">
-                    <p className="text-xs text-blue-200 font-medium mb-1">Credits</p>
-                    <p className="text-xl sm:text-2xl font-bold text-white">{semesterData.summary.completedCredits}</p>
+                  <div className="bg-white border border-gray-200 rounded-lg px-5 py-3">
+                    <p className="text-sm text-gray-600 font-medium mb-1">Credits</p>
+                    <p className="text-3xl font-bold text-gray-900">{semesterData.summary.completedCredits}</p>
                   </div>
                 )}
-                {/* Refresh Button */}
-                <div className="border-l border-white/20 pl-3 sm:pl-4 flex items-center">
-                  <button
-                    onClick={() => fetchGradeReports(true)}
-                    disabled={loading}
-                    className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Refresh data"
-                  >
-                    <FaSync className={`w-3 h-3 text-white ${loading ? 'animate-spin' : ''}`} />
-                  </button>
-                </div>
+                <button
+                  onClick={() => fetchGradeReports(true)}
+                  disabled={loading}
+                  className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 p-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Refresh data"
+                >
+                  <FaSync className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+                </button>
               </div>
             )}
           </div>
         </div>
 
-        {/* Streamlined Tab Navigation */}
-        <div className="bg-white rounded-lg shadow-lg border border-gray-200 mb-6 overflow-hidden">
+        {/* Tab Navigation */}
+        <div className="bg-white rounded-lg border border-gray-200 mb-6 overflow-hidden">
           <div className="flex">
             <button
               onClick={() => setActiveTab('semester')}
-              className={`flex-1 px-2 sm:px-4 py-3 sm:py-4 text-xs sm:text-sm font-semibold transition-all duration-300 relative ${
+              className={`flex-1 px-4 py-3 text-sm font-semibold transition-all duration-300 relative ${
                 activeTab === 'semester'
                   ? 'text-blue-600 bg-blue-50'
                   : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
               }`}
             >
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
-                <FaCalendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden xs:inline sm:inline">By Semester</span>
-                <span className="xs:hidden sm:hidden">Semester</span>
+              <div className="flex items-center justify-center gap-2">
+                <FaCalendar className="w-4 h-4" />
+                <span>By Semester</span>
               </div>
               {activeTab === 'semester' && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-blue-600 to-indigo-600"></div>
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-blue-500 to-blue-700"></div>
               )}
             </button>
 
             <button
               onClick={() => setActiveTab('curriculum')}
-              className={`flex-1 px-2 sm:px-4 py-3 sm:py-4 text-xs sm:text-sm font-semibold transition-all duration-300 relative border-l border-r border-gray-200 ${
+              className={`flex-1 px-4 py-3 text-sm font-semibold transition-all duration-300 relative border-l border-r border-gray-200 ${
                 activeTab === 'curriculum'
-                  ? 'text-blue-600 bg-blue-50'
-                  : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+                  ? 'text-green-600 bg-green-50'
+                  : 'text-gray-600 hover:text-green-600 hover:bg-gray-50'
               }`}
             >
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
-                <FaBook className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden xs:inline sm:inline">By Curriculum</span>
-                <span className="xs:hidden sm:hidden">Curriculum</span>
+              <div className="flex items-center justify-center gap-2">
+                <FaBook className="w-4 h-4" />
+                <span>By Curriculum</span>
               </div>
               {activeTab === 'curriculum' && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-blue-600 to-indigo-600"></div>
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-green-500 to-green-700"></div>
               )}
             </button>
 
             <button
               onClick={() => setActiveTab('graph')}
-              className={`flex-1 px-2 sm:px-4 py-3 sm:py-4 text-xs sm:text-sm font-semibold transition-all duration-300 relative ${
+              className={`flex-1 px-4 py-3 text-sm font-semibold transition-all duration-300 relative ${
                 activeTab === 'graph'
-                  ? 'text-blue-600 bg-blue-50'
-                  : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+                  ? 'text-purple-600 bg-purple-50'
+                  : 'text-gray-600 hover:text-purple-600 hover:bg-gray-50'
               }`}
             >
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
-                <FaChartLine className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden xs:inline sm:inline">Analytics</span>
-                <span className="xs:hidden sm:hidden">Charts</span>
+              <div className="flex items-center justify-center gap-2">
+                <FaChartLine className="w-4 h-4" />
+                <span>Analytics</span>
               </div>
               {activeTab === 'graph' && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-blue-600 to-indigo-600"></div>
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-purple-500 to-purple-700"></div>
               )}
             </button>
           </div>
@@ -544,50 +530,58 @@ export default function GradeReportPage() {
 
         {/* Graph Tab Content */}
         {activeTab === 'graph' && graphData && (
-          <div className="space-y-8">
+          <div className="space-y-6">
             {/* Performance Metrics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-linear-to-br from-green-500 to-emerald-600 rounded-lg shadow-lg p-4 text-white transform hover:scale-105 transition-all">
+              <div className="bg-linear-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <FaAward className="w-6 h-6 opacity-80" />
-                  <span className="text-2xl font-bold">{graphData.metrics.aGrades}</span>
+                  <div className="bg-green-100 p-2 rounded-lg">
+                    <FaAward className="w-5 h-5 text-green-600" />
+                  </div>
+                  <span className="text-3xl font-bold text-gray-900">{graphData.metrics.aGrades}</span>
                 </div>
-                <p className="text-xs text-green-100 font-medium">A/A+ Grades</p>
-                <div className="mt-1 text-xs text-green-200">{graphData.metrics.performanceRate}% Excellence</div>
+                <p className="text-sm text-gray-600 font-medium mb-1">A/A+ Grades</p>
+                <div className="text-xs text-gray-500">{graphData.metrics.performanceRate}% Excellence</div>
               </div>
 
-              <div className="bg-linear-to-br from-blue-500 to-indigo-600 rounded-lg shadow-lg p-4 text-white transform hover:scale-105 transition-all">
+              <div className="bg-linear-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <FaBook className="w-6 h-6 opacity-80" />
-                  <span className="text-2xl font-bold">{graphData.metrics.completedCourses}</span>
+                  <div className="bg-blue-100 p-2 rounded-lg">
+                    <FaBook className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <span className="text-3xl font-bold text-gray-900">{graphData.metrics.completedCourses}</span>
                 </div>
-                <p className="text-xs text-blue-100 font-medium">Courses Completed</p>
-                <div className="mt-1 text-xs text-blue-200">of {graphData.metrics.totalCourses} total</div>
+                <p className="text-sm text-gray-600 font-medium mb-1">Courses Completed</p>
+                <div className="text-xs text-gray-500">of {graphData.metrics.totalCourses} total</div>
               </div>
 
-              <div className="bg-linear-to-br from-purple-500 to-pink-600 rounded-lg shadow-lg p-4 text-white transform hover:scale-105 transition-all">
+              <div className="bg-linear-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <FaStar className="w-6 h-6 opacity-80" />
-                  <span className="text-2xl font-bold">{graphData.metrics.passRate}%</span>
+                  <div className="bg-purple-100 p-2 rounded-lg">
+                    <FaStar className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <span className="text-3xl font-bold text-gray-900">{graphData.metrics.passRate}%</span>
                 </div>
-                <p className="text-xs text-purple-100 font-medium">Pass Rate</p>
-                <div className="mt-1 text-xs text-purple-200">{graphData.metrics.failedCourses} failed courses</div>
+                <p className="text-sm text-gray-600 font-medium mb-1">Pass Rate</p>
+                <div className="text-xs text-gray-500">{graphData.metrics.failedCourses} failed courses</div>
               </div>
 
-              <div className="bg-linear-to-br from-orange-500 to-red-600 rounded-lg shadow-lg p-4 text-white transform hover:scale-105 transition-all">
+              <div className="bg-linear-to-br from-orange-50 to-red-50 border border-orange-200 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <FaChartLine className="w-6 h-6 opacity-80" />
-                  <span className="text-2xl font-bold">{semesterData?.summary.cgpa}</span>
+                  <div className="bg-orange-100 p-2 rounded-lg">
+                    <FaChartLine className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <span className="text-3xl font-bold text-gray-900">{semesterData?.summary.cgpa}</span>
                 </div>
-                <p className="text-xs text-orange-100 font-medium">Current CGPA</p>
-                <div className="mt-1 text-xs text-orange-200">{graphData.metrics.bGrades} B grades</div>
+                <p className="text-sm text-gray-600 font-medium mb-1">Current CGPA</p>
+                <div className="text-xs text-gray-500">{graphData.metrics.bGrades} B grades</div>
               </div>
             </div>
 
             {/* GPA Trend Chart */}
-            <div className="bg-white rounded-lg shadow-lg p-4 border border-gray-200">
-              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <FaChartLine className="text-blue-600" />
+            <div className="bg-white rounded-lg border-2 border-blue-200 p-6">
+              <h3 className="text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
+                <FaChartLine className="w-5 h-5 text-blue-600" />
                 GPA Progression Over Time
               </h3>
               {graphData.gpaData.length > 0 ? (
@@ -643,9 +637,9 @@ export default function GradeReportPage() {
             </div>
 
             {/* Grade Trend Over Time */}
-            <div className="bg-white rounded-lg shadow-lg p-4 border border-gray-200">
-              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <FaStar className="text-purple-600" />
+            <div className="bg-white rounded-lg border-2 border-purple-200 p-6">
+              <h3 className="text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
+                <FaStar className="w-5 h-5 text-purple-600" />
                 Grade Performance Trend (All Grades)
               </h3>
               <ResponsiveContainer width="100%" height={320}>
@@ -691,9 +685,9 @@ export default function GradeReportPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Grade Distribution */}
-              <div className="bg-white rounded-lg shadow-lg p-4 border border-gray-200">
-                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                  <FaAward className="text-indigo-600" />
+              <div className="bg-white rounded-lg border-2 border-indigo-200 p-6">
+                <h3 className="text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
+                  <FaAward className="w-5 h-5 text-indigo-600" />
                   Overall Grade Distribution
                 </h3>
                 <ResponsiveContainer width="100%" height={300}>
@@ -723,9 +717,9 @@ export default function GradeReportPage() {
               </div>
 
               {/* Credits per Semester */}
-              <div className="bg-white rounded-lg shadow-lg p-4 border border-gray-200">
-                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                  <FaBook className="text-purple-600" />
+              <div className="bg-white rounded-lg border-2 border-purple-200 p-6">
+                <h3 className="text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
+                  <FaBook className="w-5 h-5 text-purple-600" />
                   Credits Earned per Semester
                 </h3>
                 {graphData.creditsData.length > 0 ? (
@@ -762,9 +756,9 @@ export default function GradeReportPage() {
             </div>
 
             {/* Courses per Semester - Full Width */}
-            <div className="bg-white rounded-lg shadow-lg p-4 border border-gray-200">
-              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <FaCalendar className="text-green-600" />
+            <div className="bg-white rounded-lg border-2 border-green-200 p-6">
+              <h3 className="text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
+                <FaCalendar className="w-5 h-5 text-green-600" />
                 Courses per Semester
               </h3>
               <ResponsiveContainer width="100%" height={300}>
@@ -794,17 +788,17 @@ export default function GradeReportPage() {
           <>
             {/* Student Info Card */}
             {currentData?.studentInfo && Object.keys(currentData.studentInfo).length > 0 && (
-              <div className="bg-white rounded-lg shadow-lg p-4 mb-6 border border-gray-200">
-                <h3 className="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
-                  <FaGraduationCap className="text-blue-600" />
+              <div className="bg-linear-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200 p-6 mb-6">
+                <h3 className="text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
+                  <FaGraduationCap className="w-5 h-5 text-blue-600" />
                   Student Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {Object.entries(currentData.studentInfo)
                     .filter(([key]) => key.toLowerCase().includes('name') || key.toLowerCase().includes('id'))
                     .map(([key, value]) => (
-                      <div key={key} className="bg-linear-to-br from-blue-50 to-indigo-50 rounded-lg p-3 border border-blue-100">
-                        <p className="text-xs text-gray-500 font-medium mb-1">{key}</p>
+                      <div key={key} className="bg-white rounded-lg p-3 border border-gray-200">
+                        <p className="text-xs text-gray-600 font-medium mb-1">{key}</p>
                         <p className="text-sm text-gray-900 font-bold">{value}</p>
                       </div>
                     ))}
@@ -813,86 +807,94 @@ export default function GradeReportPage() {
             )}
 
             {/* Semesters */}
-            <div className="space-y-4">
+            <div className="space-y-6">
               {currentData?.semesters?.map((semester, index) => (
-                <div key={index} className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:scale-[1.01]">
+                <div key={index} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                   {/* Semester Header */}
-                  <div className="bg-blue-600 px-4 py-3 flex items-center justify-between">
-                    <h3 className="text-base font-bold text-white flex items-center gap-2">
-                      <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                        <FaStar className="w-4 h-4" />
-                      </div>
+                  <div className={`bg-linear-to-r ${
+                    index % 4 === 0 ? 'from-blue-50 to-indigo-50 border-blue-200' :
+                    index % 4 === 1 ? 'from-green-50 to-emerald-50 border-green-200' :
+                    index % 4 === 2 ? 'from-purple-50 to-pink-50 border-purple-200' :
+                    'from-orange-50 to-red-50 border-orange-200'
+                  } border-b px-6 py-4 flex items-center justify-between`}>
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                      <FaStar className={`w-5 h-5 ${
+                        index % 4 === 0 ? 'text-blue-600' :
+                        index % 4 === 1 ? 'text-green-600' :
+                        index % 4 === 2 ? 'text-purple-600' :
+                        'text-orange-600'
+                      }`} />
                       {semester.title}
                     </h3>
                     {semester.gpa && (
-                      <div className="bg-white/20 backdrop-blur-md px-3 py-2 rounded-lg shadow-md">
-                        <span className="text-xs text-blue-100 font-medium mr-1">GPA:</span>
-                        <span className="text-lg font-bold text-white">{semester.gpa}</span>
+                      <div className="bg-white border border-gray-200 px-4 py-2 rounded-lg">
+                        <span className="text-sm text-gray-600 font-medium mr-2">GPA:</span>
+                        <span className="text-xl font-bold text-gray-900">{semester.gpa}</span>
                       </div>
                     )}
                   </div>
 
-                  {/* Courses Table with Enhanced Design */}
+                  {/* Courses Table */}
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead className="bg-linear-to-r from-gray-50 to-blue-50 border-b-2 border-blue-200">
+                      <thead className="bg-gray-50 border-b border-gray-200">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                             Course Code
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                             Course Title
                           </th>
-                          <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
                             Credit
                           </th>
-                          <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
                             Grade
                           </th>
-                          <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
                             Grade Point
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100">
+                      <tbody className="divide-y divide-gray-200">
                         {semester.courses.map((course, courseIndex) => (
-                          <tr key={courseIndex} className="hover:bg-linear-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200">
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-800 text-xs font-bold">
+                          <tr key={courseIndex} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="inline-flex items-center px-3 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200">
                                 {course.courseCode}
                               </span>
                             </td>
-                            <td className="px-4 py-3">
-                              <span className="text-sm text-gray-800 font-medium">{course.courseTitle}</span>
+                            <td className="px-6 py-4">
+                              <span className="text-sm text-gray-900 font-medium">{course.courseTitle}</span>
                             </td>
-                            <td className="px-4 py-3 text-center">
+                            <td className="px-6 py-4 text-center">
                               <span className="text-sm font-semibold text-gray-700">{course.credit || '-'}</span>
                             </td>
-                            <td className="px-4 py-3 text-center">
+                            <td className="px-6 py-4 text-center">
                               <span className={`text-lg font-black ${getGradeColor(course.grade)}`}>
                                 {course.grade || '-'}
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-center">
+                            <td className="px-6 py-4 text-center">
                               <span className="text-sm font-bold text-gray-800">{course.gradePoint || '-'}</span>
                             </td>
                           </tr>
                         ))}
                       </tbody>
                       {/* Semester Summary Row */}
-                      <tfoot className="bg-blue-50 border-t-2 border-blue-300">
+                      <tfoot className="bg-gray-50 border-t-2 border-gray-300">
                         <tr>
-                          <td colSpan={2} className="px-4 py-4 text-left">
+                          <td colSpan={2} className="px-6 py-4 text-left">
                             <div className="flex items-center gap-2">
                               <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
                                 <FaCalculator className="w-3 h-3 text-white" />
                               </div>
-                              <span className="text-sm font-bold text-blue-800">Semester Summary</span>
+                              <span className="text-sm font-bold text-gray-800">Semester Summary</span>
                             </div>
                           </td>
-                          <td className="px-4 py-4 text-center">
-                            <div className="bg-white rounded-md px-2 py-1 shadow-sm">
-                              <span className="text-sm font-bold text-gray-800">
+                          <td className="px-6 py-4 text-center">
+                            <div className="bg-white rounded-lg px-3 py-2 border border-gray-200">
+                              <span className="text-sm font-bold text-gray-900">
                                 {(() => {
                                   const totalCredits = semester.courses.reduce((sum, course) => {
                                     const grade = course.grade?.toUpperCase()?.trim()
@@ -984,17 +986,18 @@ export default function GradeReportPage() {
           </>
         )}
 
-        {/* Empty State with Better Design */}
+        {/* Empty State */}
         {(activeTab === 'curriculum' || activeTab === 'semester') && (!currentData?.semesters || currentData.semesters.length === 0) && (
-          <div className="bg-white rounded-lg shadow-lg p-12 text-center border border-gray-200">
-            <div className="w-20 h-20 bg-linear-to-br from-blue-100 to-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+          <div className="bg-linear-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200 p-12 text-center">
+            <div className="w-20 h-20 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
               <FaGraduationCap className="w-10 h-10 text-blue-600" />
             </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">No Grade Data Available</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">No Grade Data Available</h3>
             <p className="text-gray-600">Your academic records will appear here once available.</p>
           </div>
         )}
       </div>
+      <Footer/>
     </div>
   )
 }

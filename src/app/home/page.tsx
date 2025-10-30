@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import Navbar from '@/components/Navbar/Navbar'
 import Loading from './loading'
 import { prefetchAllData } from '@/lib/prefetch'
+import Footer from '@/components/Footer/Footer'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'
 
@@ -318,70 +319,54 @@ const Home = () => {
   const currentSemester = userData.registration.semesters.find(s => s.selected)
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="max-w-7xl mx-auto  md:p-8">
-        {/* Classic Header with Glassmorphism */}
-        <div className="bg-white/80 backdrop-blur-xl  overflow-hidden border border-gray-200/50 mb-6">
-          <div className="relative bg-linear-to-r from-blue-500 via-indigo-500 to-purple-500 px-6 py-6">
-            {/* Decorative Elements */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
-            
-            <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-12 h-12 bg-white/30 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                  <h1 className="text-2xl md:text-3xl font-bold text-white">
-                    {userData.studentName || 'Student Portal'}
-                  </h1>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 ml-15">
-                  <p className="text-blue-100 font-medium">ID: {userData.studentId}</p>
-                  <span className="hidden sm:block text-blue-200">•</span>
-                  <p className="text-blue-100 font-medium">{currentSemester?.text || 'Current Semester'}</p>
-                </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-blue-900 mb-2">
+                {userData.studentName || 'Student Portal'}
+              </h1>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                <p className="text-gray-600 font-medium">ID: {userData.studentId}</p>
+                <span className="hidden sm:block text-gray-400">•</span>
+                <p className="text-gray-600 font-medium">{currentSemester?.text || 'Current Semester'}</p>
               </div>
-              <button
-                onClick={handleLogout}
-                className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-5 py-2 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 border border-white/30"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                Logout
-              </button>
             </div>
+            {/* <button
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Logout
+            </button> */}
           </div>
 
           {/* Microsoft Teams Credentials */}
           {userData.teamsEmail && userData.teamsPassword && (
-            <div className="bg-emerald-50/80 border-t border-emerald-200/50 px-6 py-4">
-              <div className="flex items-start gap-4">
-                <div className="bg-emerald-100/80 rounded-xl p-2 mt-1">
-                  <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-linear-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start gap-3">
+                <div className="bg-indigo-100 rounded-lg p-2 mt-0.5">
+                  <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-sm font-bold text-emerald-700 mb-2 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                    Microsoft Teams Credentials
-                  </h3>
+                  <h3 className="text-sm font-bold text-gray-900 mb-3">Microsoft Teams Credentials</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <p className="text-emerald-700/80 font-medium text-xs mb-1">Username</p>
-                      <p className="text-emerald-800 font-mono bg-white/80 backdrop-blur-sm px-3 py-2 rounded-lg border border-emerald-200/50 text-sm">
+                      <p className="text-xs font-medium text-gray-600 mb-1">Username</p>
+                      <p className="text-sm font-mono bg-gray-50 px-3 py-2 rounded border text-gray-600 border-gray-200">
                         {userData.teamsEmail}
                       </p>
                     </div>
                     <div>
-                      <p className="text-emerald-700/80 font-medium text-xs mb-1">Password</p>
-                      <p className="text-emerald-800 font-mono bg-white/80 backdrop-blur-sm px-3 py-2 rounded-lg border border-emerald-200/50 text-sm">
+                      <p className="text-xs font-medium text-gray-600 mb-1">Password</p>
+                      <p className="text-sm font-mono text-gray-600 bg-gray-50 px-3 py-2 rounded border border-gray-200">
                         {userData.teamsPassword}
                       </p>
                     </div>
@@ -392,14 +377,14 @@ const Home = () => {
           )}
 
           {/* Summary Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 bg-gray-50/50">
-            <div className="bg-white/80 backdrop-blur-sm border border-blue-200/50 rounded-xl p-4 hover:border-blue-300/70 transition-all duration-300">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-linear-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600 font-medium mb-1 text-sm">Total Courses</p>
-                  <p className="text-3xl font-bold text-blue-600">{userData.registration.courses.filter(c => c.status !== 'Dropped').length}</p>
+                  <p className="text-sm text-gray-600 font-medium mb-1">Total Courses</p>
+                  <p className="text-3xl font-bold text-gray-900">{userData.registration.courses.filter(c => c.status !== 'Dropped').length}</p>
                 </div>
-                <div className="bg-blue-100/80 p-3 rounded-xl">
+                <div className="bg-blue-100 p-3 rounded-lg">
                   <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
@@ -407,13 +392,13 @@ const Home = () => {
               </div>
             </div>
 
-            <div className="bg-white/80 backdrop-blur-sm border border-purple-200/50 rounded-xl p-4 hover:border-purple-300/70 transition-all duration-300">
+            <div className="bg-linear-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600 font-medium mb-1 text-sm">Schedule Days</p>
-                  <p className="text-3xl font-bold text-purple-600">{userData.classSchedule.length}</p>
+                  <p className="text-sm text-gray-600 font-medium mb-1">Schedule Days</p>
+                  <p className="text-3xl font-bold text-gray-900">{userData.classSchedule.length}</p>
                 </div>
-                <div className="bg-purple-100/80 p-3 rounded-xl">
+                <div className="bg-purple-100 p-3 rounded-lg">
                   <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
@@ -421,15 +406,15 @@ const Home = () => {
               </div>
             </div>
 
-            <div className="bg-white/80 backdrop-blur-sm border border-emerald-200/50 rounded-xl p-4 hover:border-emerald-300/70 transition-all duration-300">
+            <div className="bg-linear-to-br from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600 font-medium mb-1 text-sm">Today's Classes</p>
-                  <p className="text-3xl font-bold text-emerald-600">
+                  <p className="text-sm text-gray-600 font-medium mb-1">Today's Classes</p>
+                  <p className="text-3xl font-bold text-gray-900">
                     {userData.classSchedule[0]?.classes.filter(c => c.courseName !== 'No Class On This Day').length || 0}
                   </p>
                 </div>
-                <div className="bg-emerald-100/80 p-3 rounded-xl">
+                <div className="bg-emerald-100 p-3 rounded-lg">
                   <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -439,29 +424,21 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Main Content - Two Sections */}
-        <div className="space-y-6">
-          {/* Class Schedule Section - FIRST */}
-          <div className="bg-white/80 backdrop-blur-xl overflow-hidden border border-gray-200/50">
-            <div className="relative bg-linear-to-r from-cyan-500 via-blue-500 to-indigo-500 px-6 py-5">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-              <h2 className="relative z-10 text-xl font-bold text-white flex items-center gap-3">
-                <div className="bg-white/30 backdrop-blur-sm p-2 rounded-xl">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                Class Schedule
-                <span className="ml-auto text-sm font-normal text-cyan-100 bg-white/10 px-3 py-1 rounded-full">
-                  {userData.classSchedule.length} Days
-                </span>
-              </h2>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Main Content Sections */}
+        <div className="space-y-8">
+          {/* Class Schedule Section */}
+          <div>
+            <h2 className="text-2xl font-bold bg-linear-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent mb-4 flex items-center gap-2">
+              <svg className="w-6 h-6 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Class Schedule
+              <span className="text-sm font-normal text-gray-500">({userData.classSchedule.length} Days)</span>
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {userData.classSchedule.slice(0, cardsToShow).map((schedule, index) => (
-                  <div key={index} className="bg-gray-50/80 backdrop-blur-sm border border-gray-200/50 rounded-xl overflow-hidden hover:border-cyan-300/70 transition-all duration-300">
-                    <div className="bg-linear-to-r from-cyan-50/80 to-blue-50/80 border-b border-cyan-200/50 px-4 py-3">
+                  <div key={index} className="bg-gray-50/80 backdrop-blur-sm border-2 border-cyan-200/50 rounded-xl overflow-hidden hover:border-cyan-400/70 transition-all duration-300">
+                    <div className="bg-linear-to-r from-cyan-100/80 to-blue-100/80 border-b-2 border-cyan-300/50 px-4 py-3">
                       <h3 className="font-bold text-base text-cyan-700 flex items-center gap-2">
                         <span className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse"></span>
                         {schedule.date}
@@ -598,30 +575,21 @@ const Home = () => {
                   </div>
                 ))}
               </div>
-            </div>
           </div>
 
-          {/* Registered Courses Section - SECOND */}
-          <div className="bg-white/80 backdrop-blur-xl overflow-hidden border border-gray-200/50">
-            <div className="relative bg-linear-to-r from-violet-500 via-purple-500 to-fuchsia-500 px-6 py-5">
-              <div className="absolute top-0 left-0 w-32 h-32 bg-white/10 rounded-full -ml-16 -mt-16"></div>
-              <h2 className="relative z-10 text-xl font-bold text-white flex items-center gap-3">
-                <div className="bg-white/30 backdrop-blur-sm p-2 rounded-xl">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                  </svg>
-                </div>
-                Registered Courses
-                <span className="ml-auto text-sm font-normal text-violet-100 bg-white/10 px-3 py-1 rounded-full">
-                  {userData.registration.courses.filter(c => c.status !== 'Dropped').length} Active
-                </span>
-              </h2>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Registered Courses Section */}
+          <div>
+            <h2 className="text-2xl font-bold bg-linear-to-r from-violet-500 to-purple-600 bg-clip-text text-transparent mb-4 flex items-center gap-2">
+              <svg className="w-6 h-6 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              Registered Courses
+              <span className="text-sm font-normal text-gray-500">({userData.registration.courses.filter(c => c.status !== 'Dropped').length} Active)</span>
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {userData.registration.courses.filter(c => c.status !== 'Dropped').slice(0, cardsToShow).map((course, index) => (
-                  <div key={index} className="bg-gray-50/80 backdrop-blur-sm border border-gray-200/50 rounded-xl overflow-hidden hover:border-purple-300/70 transition-all duration-300">
-                    <div className="bg-linear-to-r from-violet-50/80 to-purple-50/80 border-b border-violet-200/50 px-4 py-3">
+                  <div key={index} className="bg-gray-50/80 backdrop-blur-sm border-2 border-violet-200/50 rounded-xl overflow-hidden hover:border-violet-400/70 transition-all duration-300">
+                    <div className="bg-linear-to-r from-violet-100/80 to-purple-100/80 border-b-2 border-violet-300/50 px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span className="w-2 h-2 bg-violet-500 rounded-full animate-pulse"></span>
                         <span className="bg-purple-100/80 text-purple-700 text-xs font-bold px-2 py-1 rounded-lg border border-purple-200/50">
@@ -695,39 +663,30 @@ const Home = () => {
                   </div>
                 ))}
               </div>
-            </div>
           </div>
         </div>
 
         {/* Semester Information */}
-        {userData.registration.semesters && userData.registration.semesters.length > 0 && (
-          <div className="bg-white/80 backdrop-blur-xl overflow-hidden border border-gray-200/50">
-            <div className="relative bg-linear-to-r from-teal-500 via-cyan-500 to-blue-500 px-6 py-5">
-              <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mb-16"></div>
-              <h2 className="relative z-10 text-xl font-bold text-white flex items-center gap-3">
-                <div className="bg-white/30 backdrop-blur-sm p-2 rounded-xl">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                </div>
-                Available Semesters
-                <span className="ml-auto text-sm font-normal text-teal-100 bg-white/10 px-3 py-1 rounded-full">
-                  {userData.registration.semesters.length} Total
-                </span>
-              </h2>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* {userData.registration.semesters && userData.registration.semesters.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold bg-linear-to-r from-emerald-500 to-teal-600 bg-clip-text text-transparent mb-4 flex items-center gap-2">
+              <svg className="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              Available Semesters
+              <span className="text-sm font-normal text-gray-500">({userData.registration.semesters.length} Total)</span>
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {userData.registration.semesters.slice(0, cardsToShow).map((semester, index) => (
                   <div
                     key={index}
-                    className={`bg-gray-50/80 backdrop-blur-sm border border-gray-200/50 rounded-xl overflow-hidden hover:border-teal-300/70 transition-all duration-300 ${
+                    className={`bg-gray-50/80 backdrop-blur-sm border-2 border-teal-200/50 rounded-xl overflow-hidden hover:border-teal-400/70 transition-all duration-300 ${
                       semester.selected
-                        ? 'border-teal-300/70 bg-teal-50/80'
+                        ? 'border-teal-400/70 bg-teal-50/80'
                         : 'border-gray-200/50 bg-gray-50/80'
                     }`}
                   >
-                    <div className="bg-linear-to-r from-teal-50/80 to-cyan-50/80 border-b border-teal-200/50 px-4 py-3">
+                    <div className="bg-linear-to-r from-teal-100/80 to-cyan-100/80 border-b-2 border-teal-300/50 px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></span>
                         <span className="text-sm font-bold text-teal-700">Semester</span>
@@ -755,31 +714,11 @@ const Home = () => {
                   </div>
                 ))}
               </div>
-            </div>
           </div>
-        )}
+        )} */}
       </div>
 
-      {/* Custom Scrollbar Styles */}
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 8px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(229, 231, 235, 0.3);
-          border-radius: 10px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
-          border-radius: 10px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: linear-gradient(to bottom, #2563eb, #7c3aed);
-        }
-      `}</style>
+      <Footer/>
     </div>
   )
 }
