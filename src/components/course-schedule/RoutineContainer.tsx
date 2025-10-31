@@ -96,6 +96,45 @@ const RoutineContainer: React.FC = () => {
     }
   }, [router])
 
+  const clearRoutine = () => {
+    Swal.fire({
+      title: 'Clear Routine?',
+      text: 'This will remove all selected sections from your routine. This action cannot be undone.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, Clear Routine',
+      background: '#ffffff',
+      color: '#1f2937',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Clear selected sections from localStorage
+        localStorage.removeItem('myRoutineSections')
+        localStorage.removeItem('selectedCourses')
+        
+        // Reset state
+        setSelectedSections([])
+        setSelectedCourseNames([])
+        
+        // Show success message
+        Swal.fire({
+          title: 'Routine Cleared!',
+          text: 'Your routine has been cleared successfully.',
+          icon: 'success',
+          background: '#ffffff',
+          color: '#1f2937',
+          confirmButtonColor: '#10b981',
+          timer: 2000,
+          timerProgressBar: true,
+        }).then(() => {
+          // Redirect back to courses page
+          router.push('/courses')
+        })
+      }
+    })
+  }
+
   const fetchAllSections = async (courseNames: string[]) => {
     try {
       // Check if data is cached
@@ -464,13 +503,22 @@ const RoutineContainer: React.FC = () => {
             </p>
           </div>
           {selectedSections.length > 0 && (
-            <button
-              onClick={() => router.push('/courses/my-routine')}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors shadow-md"
-            >
-              <FiCalendar className="h-4 w-4" />
-              <span>My Routine ({selectedSections.length})</span>
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={clearRoutine}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors shadow-md"
+              >
+                <FiBook className="h-4 w-4" />
+                <span>Clear Routine</span>
+              </button>
+              <button
+                onClick={() => router.push('/courses/my-routine')}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors shadow-md"
+              >
+                <FiCalendar className="h-4 w-4" />
+                <span>My Routine ({selectedSections.length})</span>
+              </button>
+            </div>
           )}
         </div>
 
