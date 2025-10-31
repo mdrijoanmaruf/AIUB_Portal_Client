@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { FiArrowLeft } from 'react-icons/fi'
 import CourseSelectionContainer from '@/components/course-schedule/CourseSelectionContainer'
+import CurriculumProgress from '@/components/course-schedule/CurriculumProgress'
 import Navbar from '@/components/Navbar/Navbar'
 
 // Fetch course names on the server
@@ -64,6 +65,9 @@ const Courses = async () => {
             <p className="text-gray-500 text-xs sm:text-sm">Please check your connection and try again.</p>
           </div>
         )}
+
+        {/* Curriculum Progress Section */}
+        <CurriculumProgress />
       </div>
     </div>
   )
