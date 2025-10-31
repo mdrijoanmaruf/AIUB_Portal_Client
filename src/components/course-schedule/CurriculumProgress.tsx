@@ -61,7 +61,7 @@ const CurriculumProgress: React.FC = () => {
   const [progressData, setProgressData] = useState<CurriculumProgressData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'completed' | 'current' | 'incomplete'>('current')
+  const [activeTab, setActiveTab] = useState<'completed' | 'current' | 'incomplete' | 'unlocked'>('unlocked')
   const [expandedSemesters, setExpandedSemesters] = useState<Set<string>>(new Set())
 
   useEffect(() => {
@@ -144,7 +144,41 @@ const CurriculumProgress: React.FC = () => {
     return null
   }
 
-  const { summary, completedCourses, incompleteCourses, semesters } = progressData
+  const { summary, completedCourses, incompleteCourses, semesters, currentSemesterCourses } = progressData
+
+  // Calculate unlocked courses
+  const getUnlockedCourses = (): IncompleteCourse[] => {
+    // Get completed course codes
+    const completedCodes = new Set(completedCourses.map(c => c.code))
+    
+    // Get current semester active course codes (excluding dropped)
+    const activeCodes = new Set(
+      currentSemesterCourses
+        .filter(c => !c.isDropped)
+        .map(c => c.code)
+    )
+    
+    // Filter incomplete courses
+    return incompleteCourses.filter(course => {
+      // Exclude elective placeholders
+      const excludePatterns = ['CSE ELECTIVE', 'CSE MAJOR', 'COS ELECTIVE']
+      if (excludePatterns.some(pattern => course.name.includes(pattern))) {
+        return false
+      }
+      
+      // Check if all prerequisites are met
+      if (!course.prerequisites || course.prerequisites.length === 0) {
+        return true // No prerequisites, so it's unlocked
+      }
+      
+      // Check if all prerequisites are either completed or currently active
+      return course.prerequisites.every(prereq => 
+        completedCodes.has(prereq) || activeCodes.has(prereq)
+      )
+    })
+  }
+
+  const unlockedCourses = getUnlockedCourses()
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 mb-6 shadow-sm">
@@ -189,6 +223,16 @@ const CurriculumProgress: React.FC = () => {
       {/* Tabs */}
       <div className="flex border-b border-gray-200 mb-4 overflow-x-auto">
         <button
+          onClick={() => setActiveTab('unlocked')}
+          className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+            activeTab === 'unlocked'
+              ? 'border-b-2 border-blue-600 text-blue-600'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          Unlocked ({unlockedCourses.length})
+        </button>
+        <button
           onClick={() => setActiveTab('current')}
           className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
             activeTab === 'current'
@@ -222,7 +266,54 @@ const CurriculumProgress: React.FC = () => {
 
       {/* Content */}
       <div className="max-h-[500px] overflow-y-auto">
-        {activeTab === 'current' ? (
+        {activeTab === 'unlocked' ? (
+          <div className="space-y-3">
+            {unlockedCourses.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No unlocked courses available</p>
+            ) : (
+              unlockedCourses.map((course, index) => (
+                <div
+                  key={index}
+                  className="flex items-start gap-3 p-4 bg-purple-50 border border-purple-200 rounded-lg hover:shadow-md transition-shadow"
+                >
+                  <FiTrendingUp className="text-purple-600 mt-1 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold text-gray-900 text-sm sm:text-base">
+                            {course.code}
+                          </h4>
+                          {course.semester && (
+                            <span className="text-xs text-purple-600 bg-purple-100 px-2 py-0.5 rounded">
+                              {course.semester}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs sm:text-sm text-gray-600">{course.name}</p>
+                        {course.prerequisites && course.prerequisites.length > 0 && (
+                          <div className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                            <FiCheckCircle className="shrink-0" />
+                            <span>Prerequisites met: {course.prerequisites.join(', ')}</span>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        className="px-3 py-1.5 bg-purple-600 text-white text-xs font-medium rounded-md hover:bg-purple-700 transition-colors shrink-0"
+                        onClick={() => {
+                          // TODO: Implement select functionality later
+                          console.log('Selected course:', course.code)
+                        }}
+                      >
+                        Select
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        ) : activeTab === 'current' ? (
           <div className="space-y-3">
             {!progressData.currentSemesterCourses || progressData.currentSemesterCourses.length === 0 ? (
               <p className="text-gray-500 text-center py-8">No courses registered for current semester</p>
@@ -356,7 +447,7 @@ const CurriculumProgress: React.FC = () => {
               })()
             )}
           </div>
-        ) : (
+        ) : activeTab === 'incomplete' ? (
           <div className="space-y-2">
             {Object.entries(semesters).map(([semesterName, semesterData]) => {
               if (semesterData.incomplete.length === 0) return null
@@ -406,9 +497,6 @@ const CurriculumProgress: React.FC = () => {
                                 </h4>
                                 <p className="text-xs text-gray-600 mt-0.5">{course.name}</p>
                               </div>
-                              <div className="text-xs text-gray-500 shrink-0">
-                                {course.credit} Credits
-                              </div>
                             </div>
                             {course.prerequisites && course.prerequisites.length > 0 && (
                               <div className="text-xs text-gray-500 mt-1">
@@ -426,6 +514,44 @@ const CurriculumProgress: React.FC = () => {
             
             {Object.values(semesters).reduce((total, semester) => total + semester.incomplete.length, 0) === 0 && (
               <p className="text-gray-500 text-center py-8">All courses completed! 🎉</p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {unlockedCourses.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No unlocked courses available</p>
+            ) : (
+              unlockedCourses.map((course, index) => (
+                <div
+                  key={index}
+                  className="flex items-start gap-3 p-4 bg-purple-50 border border-purple-200 rounded-lg hover:shadow-md transition-shadow"
+                >
+                  <FiTrendingUp className="text-purple-600 mt-1 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold text-gray-900 text-sm sm:text-base">
+                            {course.code}
+                          </h4>
+                          {course.semester && (
+                            <span className="text-xs text-purple-600 bg-purple-100 px-2 py-0.5 rounded">
+                              {course.semester}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs sm:text-sm text-gray-600">{course.name}</p>
+                        {course.prerequisites && course.prerequisites.length > 0 && (
+                          <div className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                            <FiCheckCircle className="shrink-0" />
+                            <span>Prerequisites met: {course.prerequisites.join(', ')}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
             )}
           </div>
         )}
