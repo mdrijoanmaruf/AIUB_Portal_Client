@@ -1,0 +1,317 @@
+[
+  {
+    "major": "Major in Information Systems",
+    "code": "CSC4181",
+    "courseDescription": "ADVANCE DATABASE MANAGEMENT SYSTEM",
+    "prereq": "CSC2108",
+    "credit": "3/LAB"
+  },
+  {
+    "major": "Major in Information Systems",
+    "code": "MIS3101",
+    "courseDescription": "MANAGEMENT INFORMATION SYSTEM",
+    "prereq": "CSC3112",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Information Systems",
+    "code": "MIS4011",
+    "courseDescription": "ENTERPRISE RESOURCE PLANNING",
+    "prereq": "MIS3101 & CSC3112",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Information Systems",
+    "code": "CSC4285",
+    "courseDescription": "DATA WAREHOUSE AND DATA MINING",
+    "prereq": "CSC2211 & MAT3103",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Information Systems",
+    "code": "CSC4182",
+    "courseDescription": "HUMAN COMPUTER INTERACTION",
+    "prereq": "CSC3217 & CSC3215",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Information Systems",
+    "code": "MIS4014",
+    "courseDescription": "BUSINESS INTELLIGENCE AND DECISION SUPPORT SYSTEMS",
+    "prereq": "",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Information Systems",
+    "code": "CSC4180",
+    "courseDescription": "INTRODUCTION TO DATA SCIENCE",
+    "prereq": "",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Information Systems",
+    "code": "CSC4183",
+    "courseDescription": "CYBER LAWS & INFORMATION SECURITY",
+    "prereq": "",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Information Systems",
+    "code": "MIS4007",
+    "courseDescription": "DIGITAL MARKETING",
+    "prereq": "",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Information Systems",
+    "code": "MIS4012",
+    "courseDescription": "E-COMMERCE, E-GOVERNANCE & E-SERIES",
+    "prereq": "",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Software Engineering",
+    "code": "CSC4270",
+    "courseDescription": "SOFTWARE DEVELOPMENT PROJECT MANAGEMENT",
+    "prereq": "CSC3112",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Software Engineering",
+    "code": "CSC4160",
+    "courseDescription": "SOFTWARE REQUIREMENT ENGINEERING",
+    "prereq": "CSC3112",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Software Engineering",
+    "code": "CSC4271",
+    "courseDescription": "SOFTWARE QUALITY AND TESTING",
+    "prereq": "CSC3112",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Software Engineering",
+    "code": "CSC4162",
+    "courseDescription": "PROGRAMMING IN PYTHON",
+    "prereq": "CSC3215",
+    "credit": "3/LAB"
+  },
+  {
+    "major": "Major in Software Engineering",
+    "code": "CSC4274",
+    "courseDescription": "VIRTUAL REALITY SYSTEMS DESIGN",
+    "prereq": "CSC2210",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Software Engineering",
+    "code": "CSC4163",
+    "courseDescription": "ADVANCED PROGRAMMING WITH JAVA",
+    "prereq": "CSC3215",
+    "credit": "3/LAB"
+  },
+  {
+    "major": "Major in Software Engineering",
+    "code": "CSC4164",
+    "courseDescription": "ADVANCED PROGRAMMING WITH .NET",
+    "prereq": "CSC3215",
+    "credit": "3/LAB"
+  },
+  {
+    "major": "Major in Software Engineering",
+    "code": "CSC4161",
+    "courseDescription": "ADVANCED PROGRAMMING IN WEB TECHNOLOGY",
+    "prereq": "CSC3215",
+    "credit": "3/LAB"
+  },
+  {
+    "major": "Major in Software Engineering",
+    "code": "CSC4272",
+    "courseDescription": "MOBILE APPLICATION DEVELOPMENT",
+    "prereq": "CSC3215",
+    "credit": "3/LAB"
+  },
+  {
+    "major": "Major in Software Engineering",
+    "code": "CSC4273",
+    "courseDescription": "SOFTWARE ARCHITECTURE AND DESIGN PATTERNS",
+    "prereq": "CSC3112",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Computational Theory",
+    "code": "CSC4125",
+    "courseDescription": "COMPUTER SCIENCE MATHEMATICS",
+    "prereq": "CSC2211 & MAT3101",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Computational Theory",
+    "code": "CSC4126",
+    "courseDescription": "BASIC GRAPH THEORY",
+    "prereq": "CSC2211",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Computational Theory",
+    "code": "CSC4127",
+    "courseDescription": "ADVANCED ALGORITHM TECHNIQUES",
+    "prereq": "CSC3217",
+    "credit": "3/LAB"
+  },
+  {
+    "major": "Major in Computational Theory",
+    "code": "CSC4233",
+    "courseDescription": "NATURAL LANGUAGE PROCESSING",
+    "prereq": "CSC3217 & CSC4162",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Computational Theory",
+    "code": "CSC4128",
+    "courseDescription": "LINEAR PROGRAMMING",
+    "prereq": "CSC3217 & MAT3103",
+    "credit": "3/LAB"
+  },
+  {
+    "major": "Major in Computational Theory",
+    "code": "CSC4231",
+    "courseDescription": "PARALLEL COMPUTING",
+    "prereq": "CSC3217",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Computational Theory",
+    "code": "CSC4232",
+    "courseDescription": "MACHINE LEARNING",
+    "prereq": "CSC3217",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Computer Engineering",
+    "code": "BAE1201",
+    "courseDescription": "BASIC MECHANICAL ENGG.",
+    "prereq": "PHY1203",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Computer Engineering",
+    "code": "EEE3103",
+    "courseDescription": "DIGITAL SIGNAL PROCESSING",
+    "prereq": "EEE2213",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Computer Engineering",
+    "code": "EEE4217",
+    "courseDescription": "VLSI CIRCUIT DESIGN",
+    "prereq": "EEE 3101 & EEE 3102",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Computer Engineering",
+    "code": "EEE2213",
+    "courseDescription": "SIGNALS & LINEAR SYSTEM",
+    "prereq": "MAT2202",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Computer Engineering",
+    "code": "COE4128",
+    "courseDescription": "DIGITAL SYSTEM DESIGN",
+    "prereq": "COE3205",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Computer Engineering",
+    "code": "COE4231",
+    "courseDescription": "IMAGE PROCESSING",
+    "prereq": "CSC4118 & EEE2213",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Computer Engineering",
+    "code": "COE4129",
+    "courseDescription": "MULTIMEDIA SYSTEMS",
+    "prereq": "CSC3215",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Computer Engineering",
+    "code": "COE4230",
+    "courseDescription": "SIMULATION & MODELING",
+    "prereq": "CSC3217",
+    "credit": "3/LAB"
+  },
+  {
+    "major": "Major in Computer Engineering",
+    "code": "COE4126",
+    "courseDescription": "ADVANCED COMPUTER NETWORKS",
+    "prereq": "COE3206",
+    "credit": "3/LAB"
+  },
+  {
+    "major": "Major in Computer Engineering",
+    "code": "COE4234",
+    "courseDescription": "COMPUTER VISION AND PATTERN RECOGNITION",
+    "prereq": "CSC4118",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Computer Engineering",
+    "code": "COE4232",
+    "courseDescription": "NETWORK SECURITY",
+    "prereq": "COE3103",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Computer Engineering",
+    "code": "COE4125",
+    "courseDescription": "ADVANCED OPERATING SYSTEM",
+    "prereq": "CSC3214",
+    "credit": "3/LAB"
+  },
+  {
+    "major": "Major in Computer Engineering",
+    "code": "EEE4233",
+    "courseDescription": "DIGITAL DESIGN WITH SYSTEM [ VERILOG,VHDL & FPGAS ]",
+    "prereq": "EEE4217",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Computer Engineering",
+    "code": "COE4235",
+    "courseDescription": "ROBOTICS ENGINEERING",
+    "prereq": "CSC3217",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Computer Engineering",
+    "code": "EEE4209",
+    "courseDescription": "TELECOMMUNICATIONS ENGINEERING",
+    "prereq": "COE3103",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Computer Engineering",
+    "code": "COE4127",
+    "courseDescription": "NETWORK RESOURCE MANAGEMENT & ORGANIZATION",
+    "prereq": "COE3103",
+    "credit": "3"
+  },
+  {
+    "major": "Major in Computer Engineering",
+    "code": "COE4233",
+    "courseDescription": "WIRELESS SENSOR NETWORKS",
+    "prereq": "COE3103",
+    "credit": "3/LAB"
+  },
+  {
+    "major": "Major in Computer Engineering",
+    "code": "EEE4241",
+    "courseDescription": "INDUSTRIAL ELECTRONICS, DRIVES & INSTRUMENTATION",
+    "prereq": "EEE310",
+    "credit": ""
+  }
+]

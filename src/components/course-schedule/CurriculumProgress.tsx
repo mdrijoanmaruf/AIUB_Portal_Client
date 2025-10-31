@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { FiCheckCircle, FiCircle, FiBook, FiAward, FiTrendingUp } from 'react-icons/fi'
+import { FiCheckCircle, FiCircle, FiBook, FiAward, FiTrendingUp, FiChevronDown, FiChevronUp } from 'react-icons/fi'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'
 
@@ -21,6 +21,14 @@ interface IncompleteCourse {
   prerequisites: string[]
   semester?: string
   major?: string
+}
+
+interface MajorCourse {
+  major: string
+  code: string
+  courseDescription: string
+  prereq: string
+  credit: string
 }
 
 interface SemesterProgress {
@@ -68,10 +76,23 @@ const CurriculumProgress: React.FC<CurriculumProgressProps> = ({ onCourseSelect,
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'completed' | 'current' | 'incomplete' | 'unlocked'>('unlocked')
   const [expandedSemesters, setExpandedSemesters] = useState<Set<string>>(new Set())
+  const [majorCourses, setMajorCourses] = useState<MajorCourse[]>([])
+  const [expandedMajors, setExpandedMajors] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     fetchCurriculumProgress()
+    fetchMajorCourses()
   }, [])
+
+  const fetchMajorCourses = async () => {
+    try {
+      const response = await fetch('/CSE_Major.json')
+      const data = await response.json()
+      setMajorCourses(data)
+    } catch (error) {
+      console.error('Error fetching major courses:', error)
+    }
+  }
 
   const fetchCurriculumProgress = async () => {
     try {
@@ -123,6 +144,18 @@ const CurriculumProgress: React.FC<CurriculumProgressProps> = ({ onCourseSelect,
     })
   }
 
+  const toggleMajor = (majorName: string) => {
+    setExpandedMajors(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(majorName)) {
+        newSet.delete(majorName)
+      } else {
+        newSet.add(majorName)
+      }
+      return newSet
+    })
+  }
+
   if (loading) {
     return (
       <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6 shadow-sm">
@@ -153,14 +186,17 @@ const CurriculumProgress: React.FC<CurriculumProgressProps> = ({ onCourseSelect,
 
   // Calculate unlocked courses
   const getUnlockedCourses = (): IncompleteCourse[] => {
-    // Get completed course codes
-    const completedCodes = new Set(completedCourses.map(c => c.code))
+    // Normalize course code helper
+    const normalizeCourseCode = (code: string) => code.replace(/\s+/g, '').toUpperCase()
     
-    // Get current semester active course codes (excluding dropped)
+    // Get completed course codes (normalized)
+    const completedCodes = new Set(completedCourses.map(c => normalizeCourseCode(c.code)))
+    
+    // Get current semester active course codes (excluding dropped, normalized)
     const activeCodes = new Set(
       currentSemesterCourses
         .filter(c => !c.isDropped)
-        .map(c => c.code)
+        .map(c => normalizeCourseCode(c.code))
     )
     
     // Filter incomplete courses
@@ -177,13 +213,62 @@ const CurriculumProgress: React.FC<CurriculumProgressProps> = ({ onCourseSelect,
       }
       
       // Check if all prerequisites are either completed or currently active
-      return course.prerequisites.every(prereq => 
-        completedCodes.has(prereq) || activeCodes.has(prereq)
-      )
+      return course.prerequisites.every(prereq => {
+        const normalizedPrereq = normalizeCourseCode(prereq)
+        return completedCodes.has(normalizedPrereq) || activeCodes.has(normalizedPrereq)
+      })
     })
   }
 
   const unlockedCourses = getUnlockedCourses()
+
+  // Calculate unlocked major courses grouped by major
+  const getUnlockedMajorCourses = (): Record<string, MajorCourse[]> => {
+    // Normalize course code helper
+    const normalizeCourseCode = (code: string) => code.replace(/\s+/g, '').toUpperCase()
+    
+    // Get completed course codes (normalized)
+    const completedCodes = new Set(completedCourses.map(c => normalizeCourseCode(c.code)))
+    
+    // Get current semester active course codes (excluding dropped, normalized)
+    const activeCodes = new Set(
+      currentSemesterCourses
+        .filter(c => !c.isDropped)
+        .map(c => normalizeCourseCode(c.code))
+    )
+    
+    const unlockedByMajor: Record<string, MajorCourse[]> = {}
+    
+    majorCourses.forEach(majorCourse => {
+      // Skip if already completed or currently taking
+      const normalizedCode = normalizeCourseCode(majorCourse.code)
+      if (completedCodes.has(normalizedCode) || activeCodes.has(normalizedCode)) {
+        return
+      }
+      
+      // Parse prerequisites (split by & or ,)
+      const prereqs = majorCourse.prereq
+        .split(/[&,]/)
+        .map(p => normalizeCourseCode(p.trim()))
+        .filter(p => p && p !== '')
+      
+      // Check if all prerequisites are met
+      const isUnlocked = prereqs.length === 0 || prereqs.every(prereq => 
+        completedCodes.has(prereq) || activeCodes.has(prereq)
+      )
+      
+      if (isUnlocked) {
+        if (!unlockedByMajor[majorCourse.major]) {
+          unlockedByMajor[majorCourse.major] = []
+        }
+        unlockedByMajor[majorCourse.major].push(majorCourse)
+      }
+    })
+    
+    return unlockedByMajor
+  }
+
+  const unlockedMajorCourses = getUnlockedMajorCourses()
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 mb-6 shadow-sm">
@@ -212,17 +297,6 @@ const CurriculumProgress: React.FC<CurriculumProgressProps> = ({ onCourseSelect,
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
-          <div 
-            className="bg-linear-to-r from-blue-500 to-blue-600 h-full transition-all duration-500 ease-out"
-            style={{ width: `${summary.completionPercentage}%` }}
-          ></div>
-        </div>
-        <div className="flex justify-between text-xs text-gray-600 mt-1">
-          <span>{summary.totalCoursesCompleted} of {summary.totalCoursesInCurriculum} courses</span>
-          <span>{summary.completionPercentage}% complete</span>
-        </div>
       </div>
 
       {/* Tabs */}
@@ -273,55 +347,143 @@ const CurriculumProgress: React.FC<CurriculumProgressProps> = ({ onCourseSelect,
       <div className="max-h-[500px] overflow-y-auto">
         {activeTab === 'unlocked' ? (
           <div className="space-y-3">
-            {unlockedCourses.length === 0 ? (
+            {unlockedCourses.length === 0 && Object.keys(unlockedMajorCourses).length === 0 ? (
               <p className="text-gray-500 text-center py-8">No unlocked courses available</p>
             ) : (
-              unlockedCourses.map((course, index) => (
-                <div
-                  key={index}
-                  className="flex items-start gap-3 p-4 bg-purple-50 border border-purple-200 rounded-lg hover:shadow-md transition-shadow"
-                >
-                  <FiTrendingUp className="text-purple-600 mt-1 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold text-gray-900 text-sm sm:text-base">
-                            {course.code}
-                          </h4>
-                          {course.semester && (
-                            <span className="text-xs text-purple-600 bg-purple-100 px-2 py-0.5 rounded">
-                              {course.semester}
-                            </span>
+              <>
+                {/* Regular Unlocked Courses */}
+                {unlockedCourses.map((course, index) => (
+                  <div
+                    key={`regular-${index}`}
+                    className="flex items-start gap-3 p-4 bg-purple-50 border border-purple-200 rounded-lg hover:shadow-md transition-shadow"
+                  >
+                    <FiTrendingUp className="text-purple-600 mt-1 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-semibold text-gray-900 text-sm sm:text-base">
+                              {course.code}
+                            </h4>
+                            {course.semester && (
+                              <span className="text-xs text-purple-600 bg-purple-100 px-2 py-0.5 rounded">
+                                {course.semester}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs sm:text-sm text-gray-600">{course.name}</p>
+                          {course.prerequisites && course.prerequisites.length > 0 && (
+                            <div className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                              <FiCheckCircle className="shrink-0" />
+                              <span>Prerequisites met: {course.prerequisites.join(', ')}</span>
+                            </div>
                           )}
                         </div>
-                        <p className="text-xs sm:text-sm text-gray-600">{course.name}</p>
-                        {course.prerequisites && course.prerequisites.length > 0 && (
-                          <div className="text-xs text-green-600 mt-2 flex items-center gap-1">
-                            <FiCheckCircle className="shrink-0" />
-                            <span>Prerequisites met: {course.prerequisites.join(', ')}</span>
-                          </div>
-                        )}
+                        <button
+                          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors shrink-0 ${
+                            selectedCourses.includes(course.name)
+                              ? 'bg-green-600 text-white cursor-not-allowed'
+                              : 'bg-purple-600 text-white hover:bg-purple-700'
+                          }`}
+                          onClick={() => {
+                            if (onCourseSelect && !selectedCourses.includes(course.name)) {
+                              onCourseSelect(course.name)
+                            }
+                          }}
+                          disabled={selectedCourses.includes(course.name)}
+                        >
+                          {selectedCourses.includes(course.name) ? 'Selected' : 'Select'}
+                        </button>
                       </div>
-                      <button
-                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors shrink-0 ${
-                          selectedCourses.includes(course.name)
-                            ? 'bg-green-600 text-white cursor-not-allowed'
-                            : 'bg-purple-600 text-white hover:bg-purple-700'
-                        }`}
-                        onClick={() => {
-                          if (onCourseSelect && !selectedCourses.includes(course.name)) {
-                            onCourseSelect(course.name)
-                          }
-                        }}
-                        disabled={selectedCourses.includes(course.name)}
-                      >
-                        {selectedCourses.includes(course.name) ? 'Selected' : 'Select'}
-                      </button>
                     </div>
                   </div>
-                </div>
-              ))
+                ))}
+
+                {/* Major Courses Grouped Dropdowns */}
+                {Object.entries(unlockedMajorCourses).map(([majorName, courses]) => {
+                  const isExpanded = expandedMajors.has(majorName)
+                  
+                  return (
+                    <div key={majorName} className="border border-indigo-200 rounded-lg overflow-hidden">
+                      <button
+                        onClick={() => toggleMajor(majorName)}
+                        className="w-full px-4 py-3 bg-indigo-50 hover:bg-indigo-100 transition-colors flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-2">
+                          <FiBook className="text-indigo-600" />
+                          <span className="font-semibold text-gray-900 text-sm sm:text-base">
+                            {majorName}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            ({courses.length} course{courses.length !== 1 ? 's' : ''})
+                          </span>
+                        </div>
+                        {isExpanded ? (
+                          <FiChevronUp className="w-5 h-5 text-gray-600" />
+                        ) : (
+                          <FiChevronDown className="w-5 h-5 text-gray-600" />
+                        )}
+                      </button>
+                      
+                      {isExpanded && (
+                        <div className="p-3 space-y-2 bg-white">
+                          {courses.map((majorCourse, idx) => {
+                            const prereqs = majorCourse.prereq
+                              .split(/[&,]/)
+                              .map(p => p.trim())
+                              .filter(p => p && p !== '')
+                            
+                            return (
+                              <div
+                                key={idx}
+                                className="flex items-start gap-3 p-3 bg-indigo-50 border border-indigo-200 rounded-lg hover:shadow-md transition-shadow"
+                              >
+                                <FiTrendingUp className="text-indigo-600 mt-1 shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <h4 className="font-semibold text-gray-900 text-sm">
+                                          {majorCourse.code}
+                                        </h4>
+                                        <span className="text-xs text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded">
+                                          {majorCourse.credit}
+                                        </span>
+                                      </div>
+                                      <p className="text-xs sm:text-sm text-gray-600">{majorCourse.courseDescription}</p>
+                                      {prereqs.length > 0 && (
+                                        <div className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                                          <FiCheckCircle className="shrink-0" />
+                                          <span>Prerequisites met: {prereqs.join(', ')}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <button
+                                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors shrink-0 ${
+                                        selectedCourses.includes(majorCourse.courseDescription)
+                                          ? 'bg-green-600 text-white cursor-not-allowed'
+                                          : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                      }`}
+                                      onClick={() => {
+                                        if (onCourseSelect && !selectedCourses.includes(majorCourse.courseDescription)) {
+                                          onCourseSelect(majorCourse.courseDescription)
+                                        }
+                                      }}
+                                      disabled={selectedCourses.includes(majorCourse.courseDescription)}
+                                    >
+                                      {selectedCourses.includes(majorCourse.courseDescription) ? 'Selected' : 'Select'}
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </>
             )}
           </div>
         ) : activeTab === 'current' ? (

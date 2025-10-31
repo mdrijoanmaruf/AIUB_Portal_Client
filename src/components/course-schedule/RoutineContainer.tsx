@@ -149,10 +149,23 @@ const RoutineContainer: React.FC = () => {
             const parsedCache = JSON.parse(cachedData)
             if (Array.isArray(parsedCache) && parsedCache.length > 0) {
               console.log('Using cached course sections data')
-              // Filter courses by the selected course names
-              const filteredSections = parsedCache.filter((course: CourseSection) => 
-                courseNames.includes(course['Course Title'])
-              )
+              
+              // Normalize course name helper
+              const normalizeName = (name: string) => 
+                name.replace(/\s*\[[A-Z0-9]\]\s*$/i, '').trim().toUpperCase()
+
+              // Filter courses by the selected course names with fuzzy matching
+              const filteredSections = parsedCache.filter((course: CourseSection) => {
+                const normalizedCourseTitle = normalizeName(course['Course Title'])
+                return courseNames.some(selectedName => {
+                  const normalizedSelectedName = normalizeName(selectedName)
+                  return normalizedCourseTitle === normalizedSelectedName ||
+                         normalizedCourseTitle.includes(normalizedSelectedName) ||
+                         normalizedSelectedName.includes(normalizedCourseTitle)
+                })
+              })
+              
+              console.log(`Found ${filteredSections.length} sections from cache for ${courseNames.length} selected courses`)
               setCourseSections(filteredSections)
               setIsLoading(false)
               return
@@ -177,10 +190,22 @@ const RoutineContainer: React.FC = () => {
           console.error('Error caching course sections:', error)
         }
 
-        // Filter courses by the selected course names
-        const filteredSections = result.data.filter((course: CourseSection) => 
-          courseNames.includes(course['Course Title'])
-        )
+        // Normalize course name helper
+        const normalizeName = (name: string) => 
+          name.replace(/\s*\[[A-Z0-9]\]\s*$/i, '').trim().toUpperCase()
+
+        // Filter courses by the selected course names with fuzzy matching
+        const filteredSections = result.data.filter((course: CourseSection) => {
+          const normalizedCourseTitle = normalizeName(course['Course Title'])
+          return courseNames.some(selectedName => {
+            const normalizedSelectedName = normalizeName(selectedName)
+            return normalizedCourseTitle === normalizedSelectedName ||
+                   normalizedCourseTitle.includes(normalizedSelectedName) ||
+                   normalizedSelectedName.includes(normalizedCourseTitle)
+          })
+        })
+        
+        console.log(`Found ${filteredSections.length} sections for ${courseNames.length} selected courses`)
         setCourseSections(filteredSections)
       } else {
         setCourseSections([])
