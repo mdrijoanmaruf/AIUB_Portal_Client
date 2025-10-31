@@ -1,9 +1,11 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { FiArrowLeft, FiBook, FiZap, FiClock, FiCalendar } from 'react-icons/fi'
+import React, { useState, useEffect, useRef } from 'react'
+import { FiArrowLeft, FiBook, FiZap, FiClock, FiCalendar, FiDownload } from 'react-icons/fi'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { toPng } from 'html-to-image'
 
 interface CourseSection {
   _id: string
@@ -84,6 +86,7 @@ const AutoRoutineGenerate = () => {
   const [generatedRoutines, setGeneratedRoutines] = useState<Routine[]>([])
   const [allSections, setAllSections] = useState<CourseSection[]>([])
   const [isLoadingSections, setIsLoadingSections] = useState(true)
+  const routineRefs = useRef<(HTMLDivElement | null)[]>([])
 
   useEffect(() => {
     // Load selected courses from localStorage
@@ -414,6 +417,129 @@ const AutoRoutineGenerate = () => {
     router.push('/courses/my-routine')
   }
 
+  // Group sections by day and time for display
+  const groupSectionsByDayTime = (sections: CourseSection[]) => {
+    const grouped: Record<string, Record<string, CourseSection[]>> = {}
+    
+    sections.forEach(section => {
+      section.Time.forEach(time => {
+        const day = time.Day
+        const timeSlot = `${time['Start Time']} - ${time['End Time']}`
+        
+        if (!grouped[day]) {
+          grouped[day] = {}
+        }
+        if (!grouped[day][timeSlot]) {
+          grouped[day][timeSlot] = []
+        }
+        
+        // Check if this section is already added for this time slot
+        const alreadyAdded = grouped[day][timeSlot].some(s => s._id === section._id)
+        if (!alreadyAdded) {
+          grouped[day][timeSlot].push(section)
+        }
+      })
+    })
+    
+    return grouped
+  }
+
+  // Download routine as image
+  const downloadRoutineImage = async (index: number) => {
+    const element = routineRefs.current[index]
+    if (!element) return
+
+    try {
+      const dataUrl = await toPng(element, {
+        quality: 1.0,
+        backgroundColor: '#ffffff',
+      })
+
+      const link = document.createElement('a')
+      link.download = `routine-option-${index + 1}.png`
+      link.href = dataUrl
+      link.click()
+    } catch (error) {
+      console.error('Error downloading routine:', error)
+    }
+  }
+
+  // Generate time slots for the timetable grid (every 30 minutes)
+  const generateTimeSlots = () => {
+    const slots: string[] = []
+    const start = timeToMinutes(startTime)
+    const end = timeToMinutes(endTime)
+    
+    for (let minutes = start; minutes <= end; minutes += 30) {
+      const hours = Math.floor(minutes / 60)
+      const mins = minutes % 60
+      const hour12 = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
+      const ampm = hours >= 12 ? 'PM' : 'AM'
+      slots.push(`${hour12}:${mins.toString().padStart(2, '0')} ${ampm}`)
+    }
+    
+    return slots
+  }
+
+  // Convert routine to chart data for Recharts
+  const convertRoutineToChartData = (routine: Routine, courseColors: Map<string, string>) => {
+    const chartData: any[] = []
+    const daysOrder = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday']
+    
+    daysOrder.forEach(day => {
+      const daySections = routine.sections.filter(section =>
+        section.Time.some(t => t.Day === day)
+      )
+      
+      if (daySections.length > 0) {
+        daySections.forEach(section => {
+          section.Time.forEach(time => {
+            if (time.Day === day) {
+              const startMinutes = timeToMinutes(time['Start Time'])
+              const endMinutes = timeToMinutes(time['End Time'])
+              const duration = endMinutes - startMinutes
+              
+              chartData.push({
+                day,
+                course: section['Course Title'],
+                section: section.Section,
+                start: startMinutes,
+                duration,
+                startTime: time['Start Time'],
+                endTime: time['End Time'],
+                classType: time['Class Type'],
+                className: time['Class Name'],
+                status: section.Status,
+                capacity: section.Capacity,
+                count: section.Count,
+                color: courseColors.get(section['Course Title']) || 'bg-gray-100'
+              })
+            }
+          })
+        })
+      }
+    })
+    
+    return chartData
+  }
+
+  // Custom tooltip for the chart
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload
+      return (
+        <div className="bg-white border border-gray-300 rounded-lg p-3 shadow-lg">
+          <p className="font-semibold text-gray-900">{data.course}</p>
+          <p className="text-sm text-gray-600">Section {data.section}</p>
+          <p className="text-sm text-gray-600">{data.startTime} - {data.endTime}</p>
+          <p className="text-sm text-gray-600">{data.classType} • {data.className}</p>
+          <p className="text-sm text-gray-600">{data.status} • {data.count}/{data.capacity} seats</p>
+        </div>
+      )
+    }
+    return null
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
       {/* Navbar */}
@@ -698,75 +824,164 @@ const AutoRoutineGenerate = () => {
               Generated Routines ({generatedRoutines.length})
             </h2>
 
-            <div className="space-y-4">
-              {generatedRoutines.map((routine, idx) => (
-                <div
-                  key={idx}
-                  className="border border-gray-200 rounded-lg p-4 hover:border-purple-300 transition-colors"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-gray-800">
-                      Routine Option {idx + 1}
-                    </h3>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-gray-600">
-                        {routine.sections.length} / {selectedCourses.length} courses
-                      </span>
-                      <button
-                        onClick={() => saveRoutine(routine)}
-                        className="px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg text-sm font-medium transition-colors"
-                      >
-                        Use This Routine
-                      </button>
+            <div className="space-y-6">
+              {generatedRoutines.map((routine, idx) => {
+                const daysOrder = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday']
+                
+                // Get all days that have classes in this routine
+                const activeDays = daysOrder.filter(day => 
+                  routine.sections.some(section => 
+                    section.Time.some(t => t.Day === day)
+                  )
+                )
+                
+                // Color palette for different courses
+                const colors = [
+                  'bg-blue-100 border-blue-300 text-blue-900',
+                  'bg-purple-100 border-purple-300 text-purple-900',
+                  'bg-green-100 border-green-300 text-green-900',
+                  'bg-orange-100 border-orange-300 text-orange-900',
+                  'bg-pink-100 border-pink-300 text-pink-900',
+                  'bg-cyan-100 border-cyan-300 text-cyan-900',
+                  'bg-indigo-100 border-indigo-300 text-indigo-900',
+                  'bg-teal-100 border-teal-300 text-teal-900',
+                ]
+                
+                // Assign colors to courses
+                const courseColors = new Map<string, string>()
+                routine.sections.forEach((section, i) => {
+                  if (!courseColors.has(section['Course Title'])) {
+                    courseColors.set(section['Course Title'], colors[i % colors.length])
+                  }
+                })
+                
+                return (
+                  <div key={idx} className="border border-gray-200 rounded-lg overflow-hidden">
+                    <div className="bg-gray-50 p-4 border-b border-gray-200 flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold text-gray-800 text-lg">
+                          Routine Option {idx + 1}
+                        </h3>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {routine.sections.length} / {selectedCourses.length} courses
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => downloadRoutineImage(idx)}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors"
+                        >
+                          <FiDownload className="h-4 w-4" />
+                          Download
+                        </button>
+                        <button
+                          onClick={() => saveRoutine(routine)}
+                          className="px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg text-sm font-medium transition-colors"
+                        >
+                          Use This Routine
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    {routine.sections.map((section, sIdx) => (
-                      <div
-                        key={sIdx}
-                        className="bg-gray-50 border border-gray-200 rounded-lg p-3"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-medium text-gray-900 text-sm">
-                              {section['Course Title']} - Section {section.Section}
-                            </h4>
-                            <p className="text-xs text-gray-600 mt-1">
-                              {section['Class ID']} • {section.Status} • {section.Count}/{section.Capacity} seats
-                            </p>
-                          </div>
-                        </div>
-                        <div className="mt-2 space-y-1">
-                          {section.Time.map((time, tIdx) => (
-                            <div
-                              key={tIdx}
-                              className="flex items-center gap-2 text-xs text-gray-700"
-                            >
-                              <FiClock className="h-3 w-3 text-purple-600" />
-                              <span className="font-medium">{time.Day}</span>
-                              <span>•</span>
-                              <span>{time['Start Time']} - {time['End Time']}</span>
-                              <span>•</span>
-                              <span className="text-gray-600">{time['Class Type']}</span>
-                              <span>•</span>
-                              <span className="text-gray-600">{time['Class Name']}</span>
-                            </div>
-                          ))}
+                    {/* Timetable Chart */}
+                    <div 
+                      ref={el => { routineRefs.current[idx] = el }}
+                      className="p-6 bg-white"
+                    >
+                      <div className="mb-4">
+                        <h4 className="text-lg font-bold text-gray-800 mb-1">Weekly Schedule</h4>
+                        <p className="text-sm text-gray-600">Routine Option {idx + 1}</p>
+                      </div>
+                      
+                      <div className="h-96 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            data={convertRoutineToChartData(routine, courseColors)}
+                            margin={{
+                              top: 20,
+                              right: 30,
+                              left: 20,
+                              bottom: 5,
+                            }}
+                            barCategoryGap="10%"
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis 
+                              dataKey="day" 
+                              type="category"
+                              tick={{ fontSize: 12 }}
+                            />
+                            <YAxis 
+                              type="number"
+                              domain={[timeToMinutes(startTime), timeToMinutes(endTime)]}
+                              tickFormatter={(value) => {
+                                const hours = Math.floor(value / 60)
+                                const mins = value % 60
+                                const hour12 = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
+                                const ampm = hours >= 12 ? 'PM' : 'AM'
+                                return `${hour12}:${mins.toString().padStart(2, '0')} ${ampm}`
+                              }}
+                              tick={{ fontSize: 10 }}
+                            />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Bar dataKey="duration" fill="#8884d8">
+                              {convertRoutineToChartData(routine, courseColors).map((entry, index) => {
+                                const colorMap: { [key: string]: string } = {
+                                  'bg-blue-100 border-blue-300 text-blue-900': '#3B82F6',
+                                  'bg-purple-100 border-purple-300 text-purple-900': '#8B5CF6',
+                                  'bg-green-100 border-green-300 text-green-900': '#10B981',
+                                  'bg-orange-100 border-orange-300 text-orange-900': '#F97316',
+                                  'bg-pink-100 border-pink-300 text-pink-900': '#EC4899',
+                                  'bg-cyan-100 border-cyan-300 text-cyan-900': '#06B6D4',
+                                  'bg-indigo-100 border-indigo-300 text-indigo-900': '#6366F1',
+                                  'bg-teal-100 border-teal-300 text-teal-900': '#14B8A6',
+                                }
+                                return (
+                                  <Cell 
+                                    key={`cell-${index}`} 
+                                    fill={colorMap[entry.color] || '#6B7280'} 
+                                  />
+                                )
+                              })}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+
+                      {/* Course Legend */}
+                      <div className="mt-6 pt-4 border-t border-gray-200">
+                        <h5 className="text-sm font-semibold text-gray-700 mb-3">Course Legend</h5>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                          {Array.from(courseColors.entries()).map(([courseTitle, colorClass]) => {
+                            const section = routine.sections.find(s => s['Course Title'] === courseTitle)
+                            return (
+                              <div key={courseTitle} className="flex items-center gap-2">
+                                <div className={`w-4 h-4 rounded ${colorClass} border-2`}></div>
+                                <div className="text-xs">
+                                  <div className="font-medium text-gray-900">{courseTitle}</div>
+                                  {section && (
+                                    <div className="text-gray-600">
+                                      Section {section.Section} • {section.Status} • {section.Count}/{section.Capacity}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          })}
                         </div>
                       </div>
-                    ))}
-                  </div>
-
-                  {routine.sections.length < selectedCourses.length && (
-                    <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <p className="text-xs text-yellow-800">
-                        ⚠️ This routine doesn't include all selected courses. Some courses may not have available sections that fit your preferences.
-                      </p>
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {routine.sections.length < selectedCourses.length && (
+                      <div className="mx-6 mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-xs text-yellow-800">
+                          ⚠️ This routine doesn't include all selected courses. Some courses may not have available sections that fit your preferences.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}
