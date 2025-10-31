@@ -9,26 +9,37 @@ import Swal from 'sweetalert2'
 
 interface CourseSelectionContainerProps {
   courseNames: string[]
+  selectedCourses?: string[]
+  onCourseSelect?: (courseName: string) => void
 }
 
-const CourseSelectionContainer: React.FC<CourseSelectionContainerProps> = ({ courseNames }) => {
+const CourseSelectionContainer: React.FC<CourseSelectionContainerProps> = ({ 
+  courseNames,
+  selectedCourses: externalSelectedCourses,
+  onCourseSelect: externalOnCourseSelect
+}) => {
   const router = useRouter()
-  const [selectedCourses, setSelectedCourses] = useState<string[]>([])
+  const [internalSelectedCourses, setInternalSelectedCourses] = useState<string[]>([])
   const [cachedCourseNames, setCachedCourseNames] = useState<string[]>(courseNames)
+
+  // Use external selected courses if provided, otherwise use internal state
+  const selectedCourses = externalSelectedCourses !== undefined ? externalSelectedCourses : internalSelectedCourses
 
   // Load selected courses and cached course names from localStorage on mount
   useEffect(() => {
-    // Load selected courses
-    const storedCourses = localStorage.getItem('selectedCourses')
-    if (storedCourses) {
-      try {
-        const parsedCourses = JSON.parse(storedCourses)
-        if (Array.isArray(parsedCourses)) {
-          setSelectedCourses(parsedCourses)
+    // Only load from localStorage if not using external state
+    if (externalSelectedCourses === undefined) {
+      const storedCourses = localStorage.getItem('selectedCourses')
+      if (storedCourses) {
+        try {
+          const parsedCourses = JSON.parse(storedCourses)
+          if (Array.isArray(parsedCourses)) {
+            setInternalSelectedCourses(parsedCourses)
+          }
+        } catch (error) {
+          console.error('Error parsing stored courses:', error)
+          localStorage.removeItem('selectedCourses')
         }
-      } catch (error) {
-        console.error('Error parsing stored courses:', error)
-        localStorage.removeItem('selectedCourses')
       }
     }
 
@@ -62,21 +73,34 @@ const CourseSelectionContainer: React.FC<CourseSelectionContainerProps> = ({ cou
     }
   }, [courseNames])
 
-  // Save to localStorage whenever selectedCourses changes
+  // Save to localStorage whenever selectedCourses changes (only for internal state)
   useEffect(() => {
-    localStorage.setItem('selectedCourses', JSON.stringify(selectedCourses))
-  }, [selectedCourses])
+    if (externalSelectedCourses === undefined) {
+      localStorage.setItem('selectedCourses', JSON.stringify(internalSelectedCourses))
+    }
+  }, [internalSelectedCourses, externalSelectedCourses])
 
   const toggleCourseSelection = (courseName: string) => {
-    setSelectedCourses(prev =>
-      prev.includes(courseName)
-        ? prev.filter(c => c !== courseName)
-        : [...prev, courseName]
-    )
+    if (externalOnCourseSelect) {
+      // Use external handler if provided
+      externalOnCourseSelect(courseName)
+    } else {
+      // Use internal state
+      setInternalSelectedCourses(prev =>
+        prev.includes(courseName)
+          ? prev.filter(c => c !== courseName)
+          : [...prev, courseName]
+      )
+    }
   }
 
   const removeCourse = (courseName: string) => {
-    setSelectedCourses(prev => prev.filter(c => c !== courseName))
+    if (externalOnCourseSelect) {
+      // Use external handler if provided (it will toggle/remove)
+      externalOnCourseSelect(courseName)
+    } else {
+      setInternalSelectedCourses(prev => prev.filter(c => c !== courseName))
+    }
   }
 
   const handleSeeAllSections = () => {

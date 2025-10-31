@@ -1,10 +1,6 @@
 import React from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
-import { FiArrowLeft } from 'react-icons/fi'
-import CourseSelectionContainer from '@/components/course-schedule/CourseSelectionContainer'
-import CurriculumProgress from '@/components/course-schedule/CurriculumProgress'
 import Navbar from '@/components/Navbar/Navbar'
+import CourseScheduleWrapper from '../../components/course-schedule/CourseScheduleWrapper'
 
 // Fetch course names on the server
 async function getCourseNames(): Promise<string[]> {
@@ -58,16 +54,13 @@ const Courses = async () => {
 
         {/* Course Selection Section */}
         {courseNames.length > 0 ? (
-          <CourseSelectionContainer courseNames={courseNames} />
+          <CourseScheduleWrapper courseNames={courseNames} />
         ) : (
           <div className="bg-white border border-gray-200 rounded-xl p-6 sm:p-8 lg:p-12 text-center shadow-sm">
             <p className="text-gray-600 text-sm sm:text-base mb-3 sm:mb-4">Unable to load course names. The server may be unavailable.</p>
             <p className="text-gray-500 text-xs sm:text-sm">Please check your connection and try again.</p>
           </div>
         )}
-
-        {/* Curriculum Progress Section */}
-        <CurriculumProgress />
       </div>
     </div>
   )

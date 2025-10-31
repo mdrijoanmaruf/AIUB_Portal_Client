@@ -57,7 +57,12 @@ interface CurriculumProgressData {
   }
 }
 
-const CurriculumProgress: React.FC = () => {
+interface CurriculumProgressProps {
+  onCourseSelect?: (courseName: string) => void
+  selectedCourses?: string[]
+}
+
+const CurriculumProgress: React.FC<CurriculumProgressProps> = ({ onCourseSelect, selectedCourses = [] }) => {
   const [progressData, setProgressData] = useState<CurriculumProgressData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -299,13 +304,19 @@ const CurriculumProgress: React.FC = () => {
                         )}
                       </div>
                       <button
-                        className="px-3 py-1.5 bg-purple-600 text-white text-xs font-medium rounded-md hover:bg-purple-700 transition-colors shrink-0"
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors shrink-0 ${
+                          selectedCourses.includes(course.name)
+                            ? 'bg-green-600 text-white cursor-not-allowed'
+                            : 'bg-purple-600 text-white hover:bg-purple-700'
+                        }`}
                         onClick={() => {
-                          // TODO: Implement select functionality later
-                          console.log('Selected course:', course.code)
+                          if (onCourseSelect && !selectedCourses.includes(course.name)) {
+                            onCourseSelect(course.name)
+                          }
                         }}
+                        disabled={selectedCourses.includes(course.name)}
                       >
-                        Select
+                        {selectedCourses.includes(course.name) ? 'Selected' : 'Select'}
                       </button>
                     </div>
                   </div>
