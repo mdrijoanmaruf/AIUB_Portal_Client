@@ -34,6 +34,7 @@ interface GeneratedRoutineDesignProps {
   selectedDays: string[]
   startTime: string
   endTime: string
+  allSections: CourseSection[]
   onDownload: (index: number) => void
   onSave: (routine: Routine) => void
 }
@@ -46,7 +47,8 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
   startTime,
   endTime,
   onDownload,
-  onSave
+  onSave,
+  allSections,
 }) => {
   const router = useRouter()
 
@@ -69,6 +71,8 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
       return hours * 60 + minutes
     }
   }
+
+  const normalizeDay = (d: string) => d.trim().slice(0,3).toLowerCase()
 
   // Generate time slots for the timetable grid (every 1 hour)
   const generateTimeSlots = () => {
@@ -174,43 +178,62 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
 
                 {/* Selected day columns */}
                 {selectedDays.map(day => {
-                  const classesAtThisTime = routine.sections
-                    .filter(section =>
-                      section.Time.some(time => {
-                        if (time.Day !== day) return false
-                        const slotStart = timeToMinutes(timeSlot)
-                        const slotEnd = slotStart + 60 // Changed from 30 to 60 minutes
-                        const classStart = timeToMinutes(time['Start Time'])
-                        const classEnd = timeToMinutes(time['End Time'])
-                        return classStart < slotEnd && classEnd > slotStart
-                      })
-                    )
+                  const slotStart = timeToMinutes(timeSlot)
+                  const slotEnd = slotStart + 60
+
+                  // Build groups based on the routine's selected sections for this specific day/slot.
+                  const normalize = (name: string) => name.replace(/\s*\[[A-Z0-9]\]\s*$/i, '').trim().toUpperCase()
+
+                  const groups = routine.sections
                     .map(section => {
-                      const timeInfo = section.Time.find(t => t.Day === day)
-                      return timeInfo ? { section, timeInfo } : null
+                      const sectionTimeInfo = section.Time.find((t: any) => normalizeDay(t.Day) === normalizeDay(day))
+                      if (!sectionTimeInfo) return null
+
+                      // Only consider this section if it starts within the current slot (first slot of the class)
+                      const classStart = timeToMinutes(sectionTimeInfo['Start Time'])
+                      if (!(classStart >= slotStart && classStart < slotEnd)) return null
+
+                      const normTitle = normalize(section['Course Title'])
+
+                      const matchingSections = allSections.filter((sec: CourseSection) => {
+                        const secTitle = normalize(sec['Course Title'])
+                        if (secTitle !== normTitle && !secTitle.includes(normTitle) && !normTitle.includes(secTitle)) return false
+
+                        // Section must have a time on the same day and overlapping this section's time
+                        return sec.Time.some((t: any) => {
+                          if (normalizeDay(t.Day) !== normalizeDay(day)) return false
+                          const sStart = timeToMinutes(t['Start Time'])
+                          const sEnd = timeToMinutes(t['End Time'])
+                          const selStart = timeToMinutes(sectionTimeInfo['Start Time'])
+                          const selEnd = timeToMinutes(sectionTimeInfo['End Time'])
+                          return sStart < selEnd && sEnd > selStart
+                        })
+                      })
+
+                      return { courseTitle: section['Course Title'], matchingSections, timeInfo: sectionTimeInfo }
                     })
-                    .filter((item): item is { section: CourseSection; timeInfo: any } => item !== null)
+                    .filter((g): g is { courseTitle: string; matchingSections: CourseSection[]; timeInfo: any } => g !== null)
 
                   return (
                     <div
                       key={`${day}-${timeSlot}`}
                       className="bg-white border-r border-gray-200 p-0.5 min-h-16 relative"
                     >
-                      {classesAtThisTime.map(({ section, timeInfo }) => {
+                      {groups.map(({ courseTitle, matchingSections, timeInfo }) => {
                         if (!timeInfo) return null
 
-                        const isFirstSlot = timeToMinutes(timeInfo['Start Time']) >= timeToMinutes(timeSlot) &&
-                                           timeToMinutes(timeInfo['Start Time']) < timeToMinutes(timeSlot) + 60 // Changed from 30 to 60
-
+                        const isFirstSlot = timeToMinutes(timeInfo['Start Time']) >= slotStart && timeToMinutes(timeInfo['Start Time']) < slotEnd
                         if (!isFirstSlot) return null
 
                         const duration = timeToMinutes(timeInfo['End Time']) - timeToMinutes(timeInfo['Start Time'])
-                        const height = (duration / 60) * 64 // Changed to 64px to match min-h-16
-                        const colorClass = courseColors.get(section['Course Title']) || 'bg-gray-100 border-gray-300 text-gray-900'
+                        const height = (duration / 60) * 64
+                        const colorClass = courseColors.get(courseTitle) || 'bg-gray-100 border-gray-300 text-gray-900'
+
+                        const sectionList = matchingSections.map((s: CourseSection) => s.Section).join(', ')
 
                         return (
                           <div
-                            key={`${section._id}-${timeInfo.Day}`}
+                            key={`${courseTitle}-${day}`}
                             className={`absolute left-0.5 right-0.5 ${colorClass} border rounded-md p-1 shadow-sm overflow-hidden`}
                             style={{
                               height: `${height - 4}px`,
@@ -218,10 +241,10 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
                             }}
                           >
                             <div className="text-xs font-semibold truncate leading-tight">
-                              {section['Course Title']}
+                              {courseTitle}
                             </div>
                             <div className="text-xs leading-tight">
-                              Sec {section.Section}
+                              Sec: {sectionList || routine.sections.find(s => s['Course Title'] === courseTitle)?.Section}
                             </div>
                             <div className="text-xs opacity-75 leading-tight">
                               {timeInfo['Start Time']} - {timeInfo['End Time']}

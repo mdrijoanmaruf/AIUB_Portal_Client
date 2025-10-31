@@ -152,6 +152,7 @@ const AutoScheduleMaking: React.FC<AutoScheduleMakingProps> = ({
                 selectedDays={selectedDays}
                 startTime={startTime}
                 endTime={endTime}
+                allSections={allSections}
                 onDownload={downloadRoutineImage}
                 onSave={saveRoutine}
               />
