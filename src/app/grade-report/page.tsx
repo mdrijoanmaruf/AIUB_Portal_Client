@@ -34,15 +34,6 @@ import Footer from '@/components/Footer/Footer'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'
 
-// Global cache for grade report data
-let gradeReportCache: {
-  curriculumData: GradeReport | null
-  semesterData: GradeReport | null
-  timestamp: number
-} | null = null
-
-const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
-
 interface Course {
   courseCode: string
   courseTitle: string
@@ -79,7 +70,13 @@ export default function GradeReportPage() {
   useEffect(() => {
     // Initialize cache management and auto logout
     initAutoLogout(router)
-    fetchGradeReports()
+    
+    // Small delay to ensure cache is ready
+    const timer = setTimeout(() => {
+      fetchGradeReports()
+    }, 100)
+    
+    return () => clearTimeout(timer)
   }, [])
 
   const fetchGradeReports = async (forceRefresh = false) => {
@@ -87,34 +84,47 @@ export default function GradeReportPage() {
       setLoading(true)
       setError('')
 
-      // Check localStorage cache first (from prefetch)
+      // Check cache first (unless force refresh)
       if (!forceRefresh) {
-        const cachedData = getCachedGradeReport()
-        if (cachedData) {
-          console.log('📊 Using prefetched grade report data from localStorage')
+        console.log('🔍 Checking cache for grade report data...')
+        
+        // First check cacheManager (with 5-minute expiry)
+        const cachedData = cacheManager.getCache('gradeReportData')
+        if (cachedData && cachedData.byCurriculum && cachedData.bySemester) {
+          console.log('📊 ✅ Using cached grade report data from cacheManager')
+          console.log('   - Curriculum semesters:', cachedData.byCurriculum?.semesters?.length || 0)
+          console.log('   - Semester data semesters:', cachedData.bySemester?.semesters?.length || 0)
           setCurriculumData(cachedData.byCurriculum)
           setSemesterData(cachedData.bySemester)
+          setLoading(false)
+          return
+        }
+
+        // Fallback to localStorage prefetch cache
+        const prefetchedData = getCachedGradeReport()
+        if (prefetchedData && prefetchedData.byCurriculum && prefetchedData.bySemester) {
+          console.log('📊 ✅ Using prefetched grade report data from localStorage')
+          console.log('   - Curriculum semesters:', prefetchedData.byCurriculum?.semesters?.length || 0)
+          console.log('   - Semester data semesters:', prefetchedData.bySemester?.semesters?.length || 0)
+          setCurriculumData(prefetchedData.byCurriculum)
+          setSemesterData(prefetchedData.bySemester)
           
-          // Also update global cache
-          gradeReportCache = {
-            curriculumData: cachedData.byCurriculum,
-            semesterData: cachedData.bySemester,
-            timestamp: Date.now()
-          }
+          // Store in cacheManager for 5-minute expiry
+          cacheManager.setCache('gradeReportData', prefetchedData, {
+            maxAge: 5 * 60 * 1000,
+            onExpiry: () => {
+              console.log('Grade report cache expired - auto logout')
+              cacheManager.autoLogout()
+            }
+          })
           
           setLoading(false)
           return
         }
-      }
-
-      // Check global cache second (unless force refresh)
-      const now = Date.now()
-      if (!forceRefresh && gradeReportCache && (now - gradeReportCache.timestamp) < CACHE_DURATION) {
-        console.log('📊 Using cached grade report data (cache age:', Math.round((now - gradeReportCache.timestamp) / 1000), 'seconds)')
-        setCurriculumData(gradeReportCache.curriculumData)
-        setSemesterData(gradeReportCache.semesterData)
-        setLoading(false)
-        return
+        
+        console.log('📊 ⚠️ No cached data found, fetching from API...')
+      } else {
+        console.log('📊 🔄 Force refresh requested, bypassing cache...')
       }
 
       console.log('📊 Fetching fresh grade report data from API')
@@ -144,25 +154,14 @@ export default function GradeReportPage() {
         console.log('Curriculum Semesters:', result.data.byCurriculum?.semesters?.length || 0)
         console.log('Semester Semesters:', result.data.bySemester?.semesters?.length || 0)
         
-        // Cache the data in global cache
-        gradeReportCache = {
-          curriculumData: result.data.byCurriculum,
-          semesterData: result.data.bySemester,
-          timestamp: now
-        }
-
-        // Cache with new cache manager with 5-minute expiry
-        try {
-          cacheManager.setCache('gradeReportData', result.data, {
-            maxAge: 5 * 60 * 1000, // 5 minutes
-            onExpiry: () => {
-              console.log('Grade report data cache expired - logging out')
-              cacheManager.autoLogout()
-            }
-          })
-        } catch (error) {
-          console.error('Error caching grade report data:', error)
-        }
+        // Cache with cacheManager with 5-minute expiry and auto-logout
+        cacheManager.setCache('gradeReportData', result.data, {
+          maxAge: 5 * 60 * 1000, // 5 minutes
+          onExpiry: () => {
+            console.log('Grade report data cache expired - logging out')
+            cacheManager.autoLogout()
+          }
+        })
         
         setCurriculumData(result.data.byCurriculum)
         setSemesterData(result.data.bySemester)
@@ -445,57 +444,69 @@ export default function GradeReportPage() {
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header Section */}
-        <motion.div 
+        {/* Header Section - Card Design */}
+        <motion.div
           className="mb-8"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-                Academic Performance
-                {semesterData?.summary?.cgpa && parseFloat(semesterData.summary.cgpa) >= 3.5 && (
-                  <FaTrophy className="w-6 h-6 text-yellow-500" />
-                )}
-              </h1>
-              <p className="text-gray-600 font-medium">Track your academic journey and achievements</p>
-            </motion.div>
-            {semesterData?.summary?.cgpa && (
-              <motion.div 
-                className="flex gap-4 items-center"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                <div className="bg-white border border-gray-200 rounded-lg px-5 py-3">
-                  <p className="text-sm text-gray-600 font-medium mb-1">CGPA</p>
-                  <p className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-                    {semesterData.summary.cgpa}
-                    {parseFloat(semesterData.summary.cgpa) >= 3.5 && <FaFire className="w-5 h-5 text-orange-500" />}
-                  </p>
+          <div className="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
+            <div className="p-6 md:p-8 lg:p-10 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+              {/* Left: Title and subtitle */}
+              <div className="md:col-span-1">
+                <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 flex items-center gap-3">
+                  {/* <span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow"> 
+                    <FaGraduationCap className="w-5 h-5" />
+                  </span> */}
+                  <span>Academic Performance</span>
+                </h1>
+                <p className="mt-2 text-sm text-gray-600">Overview of your grades, GPA trends and semester summaries.</p>
+                <div className="mt-4 flex items-center gap-3">
+                  {semesterData?.summary?.cgpa && parseFloat(semesterData.summary.cgpa) >= 3.5 && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-50 text-yellow-700 text-sm font-semibold border border-yellow-100">
+                      <FaTrophy className="w-4 h-4" /> Honor Roll
+                    </div>
+                  )}
                 </div>
-                {semesterData.summary.completedCredits && (
-                  <div className="bg-white border border-gray-200 rounded-lg px-5 py-3">
-                    <p className="text-sm text-gray-600 font-medium mb-1">Credits</p>
-                    <p className="text-3xl font-bold text-gray-900">{semesterData.summary.completedCredits}</p>
-                  </div>
-                )}
-                <button
-                  onClick={() => fetchGradeReports(true)}
-                  disabled={loading}
-                  className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 p-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Refresh data"
-                >
-                  <FaSync className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-                </button>
-              </motion.div>
-            )}
+              </div>
+
+              {/* Middle: Quick metrics */}
+              <div className="md:col-span-1 grid grid-cols-3 gap-4">
+                <div className="bg-linear-to-br from-blue-50 to-indigo-50 rounded-lg p-3 flex flex-col items-start">
+                  <p className="text-xs text-gray-600">CGPA</p>
+                  <p className="text-xl font-bold text-gray-900 mt-1">{semesterData?.summary?.cgpa ?? '—'}</p>
+                </div>
+                <div className="bg-linear-to-br from-green-50 to-emerald-50 rounded-lg p-3 flex flex-col items-start">
+                  <p className="text-xs text-gray-600">Credits</p>
+                  <p className="text-xl font-bold text-gray-900 mt-1">{semesterData?.summary?.completedCredits ?? '—'}</p>
+                </div>
+                <div className="bg-linear-to-br from-purple-50 to-pink-50 rounded-lg p-3 flex flex-col items-start">
+                  <p className="text-xs text-gray-600">Semesters</p>
+                  <p className="text-xl font-bold text-gray-900 mt-1">{(semesterData?.semesters?.length ?? 0) || '—'}</p>
+                </div>
+              </div>
+
+              {/* Right: Actions & small stats */}
+              <div className="md:col-span-1 flex items-center justify-end gap-4">
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">Last refreshed</p>
+                  <p className="text-sm font-medium text-gray-800">{new Date().toLocaleString()}</p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => fetchGradeReports(true)}
+                    disabled={loading}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                    title="Refresh data"
+                  >
+                    <FaSync className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </motion.div>
 
@@ -509,15 +520,15 @@ export default function GradeReportPage() {
           <div className="flex">
             <button
               onClick={() => setActiveTab('semester')}
-              className={`flex-1 px-4 py-3 text-sm font-semibold transition-all duration-300 relative ${
+              className={`flex-1 px-2 sm:px-4 py-3 text-xs sm:text-sm font-semibold transition-all duration-300 relative min-h-11 ${
                 activeTab === 'semester'
                   ? 'text-blue-600 bg-blue-50'
                   : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
               }`}
             >
-              <div className="flex items-center justify-center gap-2">
-                <FaCalendar className="w-4 h-4" />
-                <span>By Semester</span>
+              <div className="flex items-center justify-center gap-1 sm:gap-2">
+                <FaCalendar className="w-4 h-4 shrink-0" />
+                <span className="hidden xs:inline sm:inline">By Semester</span>
               </div>
               {activeTab === 'semester' && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-blue-500 to-blue-700"></div>
@@ -526,15 +537,15 @@ export default function GradeReportPage() {
 
             <button
               onClick={() => setActiveTab('curriculum')}
-              className={`flex-1 px-4 py-3 text-sm font-semibold transition-all duration-300 relative border-l border-r border-gray-200 ${
+              className={`flex-1 px-2 sm:px-4 py-3 text-xs sm:text-sm font-semibold transition-all duration-300 relative border-l border-r border-gray-200 min-h-11 ${
                 activeTab === 'curriculum'
                   ? 'text-green-600 bg-green-50'
                   : 'text-gray-600 hover:text-green-600 hover:bg-gray-50'
               }`}
             >
-              <div className="flex items-center justify-center gap-2">
-                <FaBook className="w-4 h-4" />
-                <span>By Curriculum</span>
+              <div className="flex items-center justify-center gap-1 sm:gap-2">
+                <FaBook className="w-4 h-4 shrink-0" />
+                <span className="hidden xs:inline sm:inline">By Curriculum</span>
               </div>
               {activeTab === 'curriculum' && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-green-500 to-green-700"></div>
@@ -543,15 +554,15 @@ export default function GradeReportPage() {
 
             <button
               onClick={() => setActiveTab('graph')}
-              className={`flex-1 px-4 py-3 text-sm font-semibold transition-all duration-300 relative ${
+              className={`flex-1 px-2 sm:px-4 py-3 text-xs sm:text-sm font-semibold transition-all duration-300 relative min-h-11 ${
                 activeTab === 'graph'
                   ? 'text-purple-600 bg-purple-50'
                   : 'text-gray-600 hover:text-purple-600 hover:bg-gray-50'
               }`}
             >
-              <div className="flex items-center justify-center gap-2">
-                <FaChartLine className="w-4 h-4" />
-                <span>Analytics</span>
+              <div className="flex items-center justify-center gap-1 sm:gap-2">
+                <FaChartLine className="w-4 h-4 shrink-0" />
+                <span className="hidden xs:inline sm:inline">Analytics</span>
               </div>
               {activeTab === 'graph' && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-purple-500 to-purple-700"></div>
@@ -569,71 +580,71 @@ export default function GradeReportPage() {
             transition={{ duration: 0.5, delay: 0.5 }}
           >
             {/* Performance Metrics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-linear-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="bg-linear-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3 sm:p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="bg-green-100 p-2 rounded-lg">
-                    <FaAward className="w-5 h-5 text-green-600" />
+                  <div className="bg-green-100 p-1.5 sm:p-2 rounded-lg">
+                    <FaAward className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
                   </div>
-                  <span className="text-3xl font-bold text-gray-900">{graphData.metrics.aGrades}</span>
+                  <span className="text-2xl sm:text-3xl font-bold text-gray-900">{graphData.metrics.aGrades}</span>
                 </div>
-                <p className="text-sm text-gray-600 font-medium mb-1">A/A+ Grades</p>
+                <p className="text-xs sm:text-sm text-gray-600 font-medium mb-1">A/A+ Grades</p>
                 <div className="text-xs text-gray-500">{graphData.metrics.performanceRate}% Excellence</div>
               </div>
 
-              <div className="bg-linear-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-linear-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 sm:p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="bg-blue-100 p-2 rounded-lg">
-                    <FaBook className="w-5 h-5 text-blue-600" />
+                  <div className="bg-blue-100 p-1.5 sm:p-2 rounded-lg">
+                    <FaBook className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                   </div>
-                  <span className="text-3xl font-bold text-gray-900">{graphData.metrics.completedCourses}</span>
+                  <span className="text-2xl sm:text-3xl font-bold text-gray-900">{graphData.metrics.completedCourses}</span>
                 </div>
-                <p className="text-sm text-gray-600 font-medium mb-1">Courses Completed</p>
+                <p className="text-xs sm:text-sm text-gray-600 font-medium mb-1">Courses Completed</p>
                 <div className="text-xs text-gray-500">of {graphData.metrics.totalCourses} total</div>
               </div>
 
-              <div className="bg-linear-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4">
+              <div className="bg-linear-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-3 sm:p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="bg-purple-100 p-2 rounded-lg">
-                    <FaStar className="w-5 h-5 text-purple-600" />
+                  <div className="bg-purple-100 p-1.5 sm:p-2 rounded-lg">
+                    <FaStar className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
                   </div>
-                  <span className="text-3xl font-bold text-gray-900">{graphData.metrics.passRate}%</span>
+                  <span className="text-2xl sm:text-3xl font-bold text-gray-900">{graphData.metrics.passRate}%</span>
                 </div>
-                <p className="text-sm text-gray-600 font-medium mb-1">Pass Rate</p>
+                <p className="text-xs sm:text-sm text-gray-600 font-medium mb-1">Pass Rate</p>
                 <div className="text-xs text-gray-500">{graphData.metrics.failedCourses} failed courses</div>
               </div>
 
-              <div className="bg-linear-to-br from-orange-50 to-red-50 border border-orange-200 rounded-lg p-4">
+              <div className="bg-linear-to-br from-orange-50 to-red-50 border border-orange-200 rounded-lg p-3 sm:p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="bg-orange-100 p-2 rounded-lg">
-                    <FaChartLine className="w-5 h-5 text-orange-600" />
+                  <div className="bg-orange-100 p-1.5 sm:p-2 rounded-lg">
+                    <FaChartLine className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
                   </div>
-                  <span className="text-3xl font-bold text-gray-900">{semesterData?.summary.cgpa}</span>
+                  <span className="text-2xl sm:text-3xl font-bold text-gray-900">{semesterData?.summary.cgpa}</span>
                 </div>
-                <p className="text-sm text-gray-600 font-medium mb-1">Current CGPA</p>
+                <p className="text-xs sm:text-sm text-gray-600 font-medium mb-1">Current CGPA</p>
                 <div className="text-xs text-gray-500">{graphData.metrics.bGrades} B grades</div>
               </div>
             </div>
 
-            {/* Charts Grid - 2 columns */}
+            {/* Charts Grid - Responsive layout */}
             <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.5 }}
             >
               {/* GPA Trend Chart */}
               <motion.div 
-                className="bg-white rounded-lg border-2 border-blue-200 p-6"
+                className="bg-white rounded-lg border-2 border-blue-200 p-3 sm:p-6"
                 whileHover={{ scale: 1.02, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <h3 className="text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
-                  <FaChartLine className="w-5 h-5 text-blue-600" />
-                  GPA Progression Over Time
+                <h3 className="text-lg sm:text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-3 sm:mb-4 flex items-center gap-2">
+                  <FaChartLine className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                  <span className="text-sm sm:text-base">GPA Progression Over Time</span>
                 </h3>
                 {graphData.gpaData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={350}>
+                  <ResponsiveContainer width="100%" height={280} className="sm:h-[350px]">
                     <AreaChart data={graphData.gpaData}>
                       <defs>
                         <linearGradient id="colorCgpa" x1="0" y1="0" x2="0" y2="1">
@@ -644,26 +655,26 @@ export default function GradeReportPage() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                       <XAxis 
                         dataKey="semester" 
-                        tick={{fontSize: 11}} 
+                        tick={{fontSize: 9, fill: '#1f2937'}} 
                         angle={-45} 
                         textAnchor="end" 
-                        height={100}
+                        height={80}
                         interval={0}
                       />
-                      <YAxis domain={[0, 4]} tick={{fontSize: 12}} />
+                      <YAxis domain={[0, 4]} tick={{fontSize: 10}} />
                       <Tooltip 
                         contentStyle={{
                           borderRadius: '8px', 
                           border: '1px solid #e5e7eb',
-                          boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                          fontSize: '12px'
                         }}
                         formatter={(value: any) => [`${value}`, 'CGPA']}
-                        // show full semester name in bold dark gray
                         labelFormatter={(label: string, payload: any) => {
                           const full = payload && payload[0] && payload[0].payload && payload[0].payload.full
                           return full || label
                         }}
-                        labelStyle={{ color: '#1f2937', fontWeight: 700 }}
+                        labelStyle={{ color: '#1f2937', fontWeight: 700, fontSize: '12px' }}
                       />
                       <Area 
                         type="monotone" 
@@ -673,49 +684,50 @@ export default function GradeReportPage() {
                         fill="url(#colorCgpa)" 
                         name="Semester CGPA" 
                         strokeWidth={2}
-                        dot={{ r: 4, stroke: '#1f2937', strokeWidth: 1, fill: '#ffffff' }}
+                        dot={{ r: 3, stroke: '#1f2937', strokeWidth: 1, fill: '#ffffff' }}
                       />
                     </AreaChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-[350px] flex items-center justify-center text-gray-400">
-                    <p>No GPA data available yet</p>
+                  <div className="h-[280px] sm:h-[350px] flex items-center justify-center text-gray-400">
+                    <p className="text-sm sm:text-base">No GPA data available yet</p>
                   </div>
                 )}
               </motion.div>
 
               {/* Grade Trend Over Time */}
               <motion.div 
-                className="bg-white rounded-lg border-2 border-purple-200 p-6"
+                className="bg-white rounded-lg border-2 border-purple-200 p-3 sm:p-6"
                 whileHover={{ scale: 1.02, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <h3 className="text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
-                  <FaStar className="w-5 h-5 text-purple-600" />
-                  Grade Performance Trend (All Grades)
+                <h3 className="text-lg sm:text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-3 sm:mb-4 flex items-center gap-2">
+                  <FaStar className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+                  <span className="text-sm sm:text-base">Grade Performance Trend</span>
                 </h3>
-                <ResponsiveContainer width="100%" height={320}>
+                <ResponsiveContainer width="100%" height={250} className="sm:h-80">
                   <BarChart data={graphData.gradeTrend}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis 
                       dataKey="semester" 
-                      tick={{fontSize: 10, fill: '#1f2937'}} 
+                      tick={{fontSize: 8, fill: '#1f2937'}} 
                       angle={-45} 
                       textAnchor="end" 
-                      height={100}
+                      height={70}
                       interval={0}
                     />
-                    <YAxis tick={{fontSize: 11}} />
+                    <YAxis tick={{fontSize: 9}} />
                     <Tooltip 
                       contentStyle={{
                         borderRadius: '8px', 
                         border: '1px solid #e5e7eb',
-                        backgroundColor: '#ffffff'
+                        backgroundColor: '#ffffff',
+                        fontSize: '11px'
                       }}
                       labelStyle={{
                         color: '#1f2937',
                         fontWeight: 'bold',
-                        fontSize: '13px'
+                        fontSize: '11px'
                       }}
                     />
                     <Bar dataKey="A+" stackId="a" fill="#16a34a" />
@@ -737,23 +749,23 @@ export default function GradeReportPage() {
 
               {/* Grade Distribution */}
               <motion.div 
-                className="bg-white rounded-lg border-2 border-indigo-200 p-6"
+                className="bg-white rounded-lg border-2 border-indigo-200 p-3 sm:p-6"
                 whileHover={{ scale: 1.02, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <h3 className="text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
-                  <FaAward className="w-5 h-5 text-indigo-600" />
-                  Overall Grade Distribution
+                <h3 className="text-lg sm:text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-3 sm:mb-4 flex items-center gap-2">
+                  <FaAward className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
+                  <span className="text-sm sm:text-base">Grade Distribution</span>
                 </h3>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={240} className="sm:h-[300px]">
                   <PieChart>
                     <Pie
                       data={graphData.gradeDistData}
                       cx="50%"
                       cy="50%"
-                      labelLine={true}
-                      label={({ grade, count, percentage }) => `${grade}: ${count} (${percentage}%)`}
-                      outerRadius={90}
+                      labelLine={false}
+                      label={({ grade, percentage }) => `${grade} ${percentage}%`}
+                      outerRadius={window.innerWidth < 640 ? 60 : 90}
                       fill="#8884d8"
                       dataKey="count"
                     >
@@ -766,6 +778,11 @@ export default function GradeReportPage() {
                         `${value} courses (${props.payload.percentage}%)`,
                         `Grade ${props.payload.grade}`
                       ]}
+                      contentStyle={{
+                        borderRadius: '8px', 
+                        border: '1px solid #e5e7eb',
+                        fontSize: '11px'
+                      }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -773,31 +790,35 @@ export default function GradeReportPage() {
 
               {/* Credits per Semester */}
               <motion.div 
-                className="bg-white rounded-lg border-2 border-purple-200 p-6"
+                className="bg-white rounded-lg border-2 border-purple-200 p-3 sm:p-6"
                 whileHover={{ scale: 1.02, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <h3 className="text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
-                  <FaBook className="w-5 h-5 text-purple-600" />
-                  Credits Earned per Semester
+                <h3 className="text-lg sm:text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-3 sm:mb-4 flex items-center gap-2">
+                  <FaBook className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+                  <span className="text-sm sm:text-base">Credits Earned</span>
                 </h3>
                 {graphData.creditsData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
+                  <ResponsiveContainer width="100%" height={240} className="sm:h-[300px]">
                     <BarChart data={graphData.creditsData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                       <XAxis 
                         dataKey="semester" 
-                        tick={{fontSize: 10}} 
+                        tick={{fontSize: 8, fill: '#1f2937'}} 
                         angle={-45} 
                         textAnchor="end" 
-                        height={80}
+                        height={70}
                         interval={0}
                       />
-                      <YAxis tick={{fontSize: 11}} />
+                      <YAxis tick={{fontSize: 9}} />
                       <Tooltip 
-                        contentStyle={{borderRadius: '8px', border: '1px solid #e5e7eb'}}
+                        contentStyle={{
+                          borderRadius: '8px', 
+                          border: '1px solid #e5e7eb',
+                          fontSize: '11px'
+                        }}
                         formatter={(value) => [`${value} credits`, 'Credits']}
-                        labelStyle={{ color: '#1f2937', fontWeight: 700 }}
+                        labelStyle={{ color: '#1f2937', fontWeight: 700, fontSize: '11px' }}
                       />
                       <Bar dataKey="credits" fill="#8b5cf6" radius={[4, 4, 0, 0]}>
                         {graphData.creditsData.map((entry, index) => (
@@ -807,36 +828,48 @@ export default function GradeReportPage() {
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-[300px] flex items-center justify-center text-gray-400">
-                    <p>No credits data available</p>
+                  <div className="h-60 sm:h-75 flex items-center justify-center text-gray-400">
+                    <p className="text-sm sm:text-base">No credits data available</p>
                   </div>
                 )}
               </motion.div>
 
-              {/* Courses per Semester - Full Width in Grid */}
+              {/* Courses per Semester - Full Width */}
               <motion.div 
-                className="md:col-span-2 bg-white rounded-lg border-2 border-green-200 p-6"
+                className="lg:col-span-2 bg-white rounded-lg border-2 border-green-200 p-3 sm:p-6"
                 whileHover={{ scale: 1.01, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <h3 className="text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4 flex items-center gap-2">
-                  <FaCalendar className="w-5 h-5 text-green-600" />
-                  Courses per Semester
+                <h3 className="text-lg sm:text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-3 sm:mb-4 flex items-center gap-2">
+                  <FaCalendar className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                  <span className="text-sm sm:text-base">Courses per Semester</span>
                 </h3>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={260} className="sm:h-[300px]">
                   <BarChart data={graphData.coursesData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis 
                       dataKey="semester" 
-                      tick={{fontSize: 10}} 
+                      tick={{fontSize: 9, fill: '#1f2937'}} 
                       angle={-45} 
                       textAnchor="end" 
                       height={80}
                       interval={0}
                     />
-                    <YAxis tick={{fontSize: 11}} />
-                    <Tooltip contentStyle={{borderRadius: '8px', border: '1px solid #e5e7eb'}} labelStyle={{ color: '#1f2937', fontWeight: 700 }} />
-                    <Legend wrapperStyle={{paddingTop: '15px'}} />
+                    <YAxis tick={{fontSize: 10}} />
+                    <Tooltip 
+                      contentStyle={{
+                        borderRadius: '8px', 
+                        border: '1px solid #e5e7eb',
+                        fontSize: '11px'
+                      }}
+                      labelStyle={{ color: '#1f2937', fontWeight: 700, fontSize: '11px' }}
+                    />
+                    <Legend 
+                      wrapperStyle={{
+                        paddingTop: '10px',
+                        fontSize: '11px'
+                      }} 
+                    />
                     <Bar dataKey="courses" fill="#10b981" radius={[4, 4, 0, 0]} name="Total Courses" />
                     <Bar dataKey="completed" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Completed" />
                   </BarChart>

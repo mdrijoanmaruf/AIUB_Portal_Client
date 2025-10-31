@@ -14,24 +14,70 @@ interface PrefetchResult {
   failed: string[]
 }
 
+// Event emitter for prefetch status
+type PrefetchEventListener = (status: 'started' | 'completed' | 'failed', data?: any) => void
+const prefetchListeners: PrefetchEventListener[] = []
+
+export function onPrefetchStatusChange(listener: PrefetchEventListener) {
+  prefetchListeners.push(listener)
+  return () => {
+    const index = prefetchListeners.indexOf(listener)
+    if (index > -1) {
+      prefetchListeners.splice(index, 1)
+    }
+  }
+}
+
+function emitPrefetchEvent(status: 'started' | 'completed' | 'failed', data?: any) {
+  prefetchListeners.forEach(listener => listener(status, data))
+}
+
 /**
  * Prefetch grade report data (curriculum and semester)
  */
 async function prefetchGradeReport(authToken: string): Promise<boolean> {
   try {
-    // Check if already cached and still valid
-    const cachedData = localStorage.getItem('gradeReportData')
+    console.log('🔍 Checking grade report cache status...')
+    
+    // Check if already cached in cacheManager
+    const cachedData = cacheManager.getCache('gradeReportData')
+    if (cachedData && cachedData.byCurriculum && cachedData.bySemester) {
+      console.log('✅ Grade report already cached in cacheManager')
+      console.log('   - Curriculum semesters:', cachedData.byCurriculum?.semesters?.length || 0)
+      console.log('   - Semester semesters:', cachedData.bySemester?.semesters?.length || 0)
+      return true
+    }
+
+    // Fallback: Check localStorage cache
+    const localCachedData = localStorage.getItem('gradeReportData')
     const cacheTimestamp = localStorage.getItem('gradeReportTimestamp')
     
-    if (cachedData && cacheTimestamp) {
+    if (localCachedData && cacheTimestamp) {
       const age = Date.now() - parseInt(cacheTimestamp)
       if (age < CACHE_DURATION) {
-        console.log('✅ Grade report already cached (age:', Math.round(age / 1000), 'seconds)')
-        return true
+        console.log('✅ Grade report already cached in localStorage (age:', Math.round(age / 1000), 'seconds)')
+        // Migrate to cacheManager
+        try {
+          const data = JSON.parse(localCachedData)
+          if (data && data.byCurriculum && data.bySemester) {
+            cacheManager.setCache('gradeReportData', data, {
+              maxAge: CACHE_DURATION - age,
+              onExpiry: () => {
+                console.log('Grade report prefetch cache expired')
+              }
+            })
+            console.log('✅ Migrated to cacheManager successfully')
+            return true
+          }
+        } catch (e) {
+          console.error('❌ Failed to migrate cache to cacheManager:', e)
+        }
+      } else {
+        console.log('⚠️ LocalStorage cache expired (age:', Math.round(age / 1000), 'seconds)')
       }
     }
 
-    console.log('🔄 Prefetching grade report data...')
+    console.log('🔄 Prefetching grade report data from server...')
     const response = await fetch(`${API_BASE}/grade-report/all`, {
       headers: {
         'Authorization': `Bearer ${authToken}`
@@ -39,19 +85,31 @@ async function prefetchGradeReport(authToken: string): Promise<boolean> {
     })
 
     if (!response.ok) {
-      throw new Error('Failed to fetch grade report')
+      throw new Error(`Failed to fetch grade report: ${response.status}`)
     }
 
     const result = await response.json()
 
-    if (result.success) {
-      // Cache the data
+    if (result.success && result.data && result.data.byCurriculum && result.data.bySemester) {
+      // Store in cacheManager (primary)
+      cacheManager.setCache('gradeReportData', result.data, {
+        maxAge: CACHE_DURATION,
+        onExpiry: () => {
+          console.log('Grade report prefetch cache expired')
+        }
+      })
+
+      // Also store in localStorage as backup
       localStorage.setItem('gradeReportData', JSON.stringify(result.data))
       localStorage.setItem('gradeReportTimestamp', Date.now().toString())
-      console.log('✅ Grade report data prefetched and cached')
+      
+      console.log('✅ Grade report data prefetched and cached successfully')
+      console.log('   - Curriculum Semesters:', result.data.byCurriculum?.semesters?.length || 0)
+      console.log('   - Semester Data:', result.data.bySemester?.semesters?.length || 0)
       return true
     }
 
+    console.warn('⚠️ Grade report fetch returned no data')
     return false
   } catch (error) {
     console.error('❌ Failed to prefetch grade report:', error)
@@ -156,6 +214,7 @@ async function prefetchAllCourseSections(): Promise<boolean> {
  */
 export async function prefetchAllData(authToken: string): Promise<PrefetchResult> {
   console.log('🚀 Starting background data prefetch...')
+  emitPrefetchEvent('started')
   const startTime = Date.now()
 
   const cached: string[] = []
@@ -192,18 +251,76 @@ export async function prefetchAllData(authToken: string): Promise<PrefetchResult
   const duration = Date.now() - startTime
   console.log(`✨ Prefetch complete in ${duration}ms - Cached: ${cached.length}, Failed: ${failed.length}`)
 
-  return {
+  const result = {
     success: failed.length === 0,
     cached,
     failed
   }
+
+  emitPrefetchEvent(result.success ? 'completed' : 'failed', result)
+
+  return result
 }
 
 /**
  * Get cached grade report data
+ * Tries cacheManager first, then falls back to localStorage
  */
 export function getCachedGradeReport() {
-  return cacheManager.getCache('gradeReportData')
+  console.log('🔍 getCachedGradeReport: Attempting to retrieve cached data...')
+  
+  // First try cacheManager
+  const cachedData = cacheManager.getCache('gradeReportData')
+  if (cachedData && cachedData.byCurriculum && cachedData.bySemester) {
+    console.log('📦 Retrieved grade report from cacheManager')
+    console.log('   - Curriculum semesters:', cachedData.byCurriculum?.semesters?.length || 0)
+    console.log('   - Semester semesters:', cachedData.bySemester?.semesters?.length || 0)
+    return cachedData
+  } else if (cachedData) {
+    console.log('⚠️ CacheManager has data but structure is incomplete:', cachedData)
+  } else {
+    console.log('ℹ️ No data in cacheManager')
+  }
+
+  // Fallback to localStorage
+  const localCachedData = localStorage.getItem('gradeReportData')
+  const cacheTimestamp = localStorage.getItem('gradeReportTimestamp')
+  
+  if (localCachedData && cacheTimestamp) {
+    const age = Date.now() - parseInt(cacheTimestamp)
+    if (age < CACHE_DURATION) {
+      console.log('📦 Retrieved grade report from localStorage (age:', Math.round(age / 1000), 'seconds)')
+      try {
+        const data = JSON.parse(localCachedData)
+        if (data && data.byCurriculum && data.bySemester) {
+          console.log('   - Curriculum semesters:', data.byCurriculum?.semesters?.length || 0)
+          console.log('   - Semester semesters:', data.bySemester?.semesters?.length || 0)
+          
+          // Migrate to cacheManager for next time
+          cacheManager.setCache('gradeReportData', data, {
+            maxAge: CACHE_DURATION - age,
+            onExpiry: () => {
+              console.log('Grade report cache expired')
+            }
+          })
+          console.log('✅ Migrated localStorage cache to cacheManager')
+          return data
+        } else {
+          console.log('⚠️ LocalStorage data structure is incomplete:', data)
+        }
+      } catch (e) {
+        console.error('❌ Failed to parse cached grade report:', e)
+        return null
+      }
+    } else {
+      console.log('⏰ LocalStorage cache expired (age:', Math.round(age / 1000), 'seconds, max:', CACHE_DURATION / 1000, 'seconds)')
+    }
+  } else {
+    console.log('ℹ️ No data in localStorage')
+  }
+  
+  console.log('❌ No cached grade report found anywhere')
+  return null
 }
 
 /**
