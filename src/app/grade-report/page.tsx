@@ -1,13 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar/Navbar'
 import Loading from './loading'
-import { FaGraduationCap, FaBook, FaCalendar, FaStar, FaAward, FaChartLine, FaTrophy, FaFire, FaCalculator, FaSync } from 'react-icons/fa'
+import { FaGraduationCap, FaBook, FaCalendar, FaStar, FaAward, FaChartLine, FaTrophy, FaFire, FaCalculator, FaSync, FaDownload } from 'react-icons/fa'
 import { getCachedGradeReport } from '@/lib/prefetch'
 import { motion } from 'framer-motion'
 import { cacheManager, initAutoLogout } from '@/lib/cacheManager'
+import { toPng } from 'html-to-image'
 import {
   LineChart,
   Line,
@@ -66,6 +67,37 @@ export default function GradeReportPage() {
   const [semesterData, setSemesterData] = useState<GradeReport | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  // Refs for each graph component
+  const gpaChartRef = useRef<HTMLDivElement>(null)
+  const gradeTrendRef = useRef<HTMLDivElement>(null)
+  const gradeDistRef = useRef<HTMLDivElement>(null)
+  const creditsChartRef = useRef<HTMLDivElement>(null)
+  const coursesChartRef = useRef<HTMLDivElement>(null)
+
+  // Function to download chart as image
+  const downloadChartAsImage = async (ref: React.RefObject<HTMLDivElement | null>, filename: string) => {
+    if (!ref.current) return
+
+    try {
+      // Use html-to-image which handles modern CSS better
+      const dataUrl = await toPng(ref.current, {
+        quality: 1,
+        pixelRatio: 2, // Higher quality (2x resolution)
+        backgroundColor: '#ffffff',
+        cacheBust: true,
+        skipFonts: false
+      })
+
+      const link = document.createElement('a')
+      link.download = `${filename}-${new Date().toISOString().split('T')[0]}.png`
+      link.href = dataUrl
+      link.click()
+    } catch (error) {
+      console.error('Error downloading chart:', error)
+      alert('Unable to download chart. Please try again.')
+    }
+  }
 
   useEffect(() => {
     // Initialize cache management and auto logout
@@ -635,14 +667,24 @@ export default function GradeReportPage() {
             >
               {/* GPA Trend Chart */}
               <motion.div 
+                ref={gpaChartRef}
                 className="bg-white rounded-lg border-2 border-blue-200 p-3 sm:p-6"
                 whileHover={{ scale: 1.02, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <h3 className="text-lg sm:text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-3 sm:mb-4 flex items-center gap-2">
-                  <FaChartLine className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-                  <span className="text-sm sm:text-base">GPA Progression Over Time</span>
-                </h3>
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <h3 className="text-lg sm:text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent flex items-center gap-2">
+                    <FaChartLine className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                    <span className="text-sm sm:text-base">GPA Progression Over Time</span>
+                  </h3>
+                  <button
+                    onClick={() => downloadChartAsImage(gpaChartRef, 'gpa-progression')}
+                    className="p-2 hover:bg-blue-50 rounded-lg transition-colors group"
+                    title="Download as image"
+                  >
+                    <FaDownload className="w-4 h-4 text-blue-600 group-hover:text-blue-700" />
+                  </button>
+                </div>
                 {graphData.gpaData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={280} className="sm:h-[350px]">
                     <AreaChart data={graphData.gpaData}>
@@ -697,14 +739,24 @@ export default function GradeReportPage() {
 
               {/* Grade Trend Over Time */}
               <motion.div 
+                ref={gradeTrendRef}
                 className="bg-white rounded-lg border-2 border-purple-200 p-3 sm:p-6"
                 whileHover={{ scale: 1.02, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <h3 className="text-lg sm:text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-3 sm:mb-4 flex items-center gap-2">
-                  <FaStar className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
-                  <span className="text-sm sm:text-base">Grade Performance Trend</span>
-                </h3>
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <h3 className="text-lg sm:text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent flex items-center gap-2">
+                    <FaStar className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+                    <span className="text-sm sm:text-base">Grade Performance Trend</span>
+                  </h3>
+                  <button
+                    onClick={() => downloadChartAsImage(gradeTrendRef, 'grade-performance-trend')}
+                    className="p-2 hover:bg-purple-50 rounded-lg transition-colors group"
+                    title="Download as image"
+                  >
+                    <FaDownload className="w-4 h-4 text-purple-600 group-hover:text-purple-700" />
+                  </button>
+                </div>
                 <ResponsiveContainer width="100%" height={250} className="sm:h-80">
                   <BarChart data={graphData.gradeTrend}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -749,14 +801,24 @@ export default function GradeReportPage() {
 
               {/* Grade Distribution */}
               <motion.div 
+                ref={gradeDistRef}
                 className="bg-white rounded-lg border-2 border-indigo-200 p-3 sm:p-6"
                 whileHover={{ scale: 1.02, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <h3 className="text-lg sm:text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-3 sm:mb-4 flex items-center gap-2">
-                  <FaAward className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
-                  <span className="text-sm sm:text-base">Grade Distribution</span>
-                </h3>
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <h3 className="text-lg sm:text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent flex items-center gap-2">
+                    <FaAward className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
+                    <span className="text-sm sm:text-base">Grade Distribution</span>
+                  </h3>
+                  <button
+                    onClick={() => downloadChartAsImage(gradeDistRef, 'grade-distribution')}
+                    className="p-2 hover:bg-indigo-50 rounded-lg transition-colors group"
+                    title="Download as image"
+                  >
+                    <FaDownload className="w-4 h-4 text-indigo-600 group-hover:text-indigo-700" />
+                  </button>
+                </div>
                 <ResponsiveContainer width="100%" height={240} className="sm:h-[300px]">
                   <PieChart>
                     <Pie
@@ -790,14 +852,24 @@ export default function GradeReportPage() {
 
               {/* Credits per Semester */}
               <motion.div 
+                ref={creditsChartRef}
                 className="bg-white rounded-lg border-2 border-purple-200 p-3 sm:p-6"
                 whileHover={{ scale: 1.02, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <h3 className="text-lg sm:text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-3 sm:mb-4 flex items-center gap-2">
-                  <FaBook className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
-                  <span className="text-sm sm:text-base">Credits Earned</span>
-                </h3>
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <h3 className="text-lg sm:text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent flex items-center gap-2">
+                    <FaBook className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+                    <span className="text-sm sm:text-base">Credits Earned</span>
+                  </h3>
+                  <button
+                    onClick={() => downloadChartAsImage(creditsChartRef, 'credits-earned')}
+                    className="p-2 hover:bg-purple-50 rounded-lg transition-colors group"
+                    title="Download as image"
+                  >
+                    <FaDownload className="w-4 h-4 text-purple-600 group-hover:text-purple-700" />
+                  </button>
+                </div>
                 {graphData.creditsData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={240} className="sm:h-[300px]">
                     <BarChart data={graphData.creditsData}>
@@ -836,14 +908,24 @@ export default function GradeReportPage() {
 
               {/* Courses per Semester - Full Width */}
               <motion.div 
+                ref={coursesChartRef}
                 className="lg:col-span-2 bg-white rounded-lg border-2 border-green-200 p-3 sm:p-6"
                 whileHover={{ scale: 1.01, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <h3 className="text-lg sm:text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-3 sm:mb-4 flex items-center gap-2">
-                  <FaCalendar className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
-                  <span className="text-sm sm:text-base">Courses per Semester</span>
-                </h3>
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <h3 className="text-lg sm:text-xl font-bold bg-linear-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent flex items-center gap-2">
+                    <FaCalendar className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                    <span className="text-sm sm:text-base">Courses per Semester</span>
+                  </h3>
+                  <button
+                    onClick={() => downloadChartAsImage(coursesChartRef, 'courses-per-semester')}
+                    className="p-2 hover:bg-green-50 rounded-lg transition-colors group"
+                    title="Download as image"
+                  >
+                    <FaDownload className="w-4 h-4 text-green-600 group-hover:text-green-700" />
+                  </button>
+                </div>
                 <ResponsiveContainer width="100%" height={260} className="sm:h-[300px]">
                   <BarChart data={graphData.coursesData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
