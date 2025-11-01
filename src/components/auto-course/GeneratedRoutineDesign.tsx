@@ -440,14 +440,26 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
     }
 
     return (
-      <div className="text-xs space-y-1">
-        <div className="font-bold text-base leading-tight" style={{ color: colors.titleColor }}>
+      <div className="flex flex-col items-center justify-center h-full text-center space-y-0.5 sm:space-y-1 leading-tight p-1">
+        <div className="font-bold text-sm sm:text-base md:text-lg leading-tight" style={{ color: colors.titleColor }}>
           {event.title}
         </div>
-        <div className="text-sm font-bold leading-tight" style={{ color: colors.sectionColor }}>
-          Sec: {event.resource.section}
+        <div className="text-sm sm:text-base leading-tight" style={{ color: colors.sectionColor }}>
+          Sec: {event.resource.section.split(', ').map((section: string, idx: number) => {
+            const [sectionName, ...rest] = section.split(' ');
+            const restText = rest.join(' ');
+            return (
+              <span key={idx}>
+                <span className="font-bold">{sectionName}</span> {restText}
+                {idx < event.resource.section.split(', ').length - 1 && ', '}
+              </span>
+            );
+          })}
         </div>
-        <div className="text-xs leading-tight" style={{ color: colors.classColor, opacity: 0.95 }}>
+        <div className="text-xs sm:text-sm leading-tight" style={{ color: colors.classColor, opacity: 0.95 }}>
+          {event.start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - {event.end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+        </div>
+        <div className="text-xs sm:text-sm leading-tight" style={{ color: colors.classColor, opacity: 0.95 }}>
           {event.resource.className}
         </div>
       </div>
@@ -481,49 +493,264 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
 
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden">
-      <div className="bg-gray-50 p-4 border-b border-gray-200 flex items-center justify-between">
-        <div>
-          <h3 className="font-semibold text-gray-800 text-lg">
-            Routine Option {index + 1}
-          </h3>
-          <p className="text-sm text-gray-600 mt-1">
-            Complete routine with all {selectedCourses.length} courses
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => onDownload(index)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors"
-          >
-            <FiDownload className="h-4 w-4" />
-            Download
-          </button>
-          <button
-            onClick={() => onSave(routine)}
-            className="px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg text-sm font-medium transition-colors"
-          >
-            Use This Routine
-          </button>
+      <div className="bg-gray-50 p-3 sm:p-4 border-b border-gray-200">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex-1">
+            <h3 className="font-semibold text-gray-800 text-base sm:text-lg">
+              Routine Option {index + 1}
+            </h3>
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">
+              Complete routine with all {selectedCourses.length} courses
+            </p>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap w-full sm:w-auto">
+            <button
+              onClick={() => onDownload(index)}
+              className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-xs sm:text-sm font-medium transition-colors"
+            >
+              <FiDownload className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span>Download</span>
+            </button>
+            <button
+              onClick={() => onSave(routine)}
+              className="flex-1 flex items-center justify-center px-3 sm:px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap"
+            >
+              Use This Routine
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Timetable Grid */}
       <div
         id={`routine-${index}`}
-        className="p-6 bg-white"
+        className="p-3 sm:p-4 md:p-6 bg-white"
       >
-        <div className="mb-4">
-          <h4 className="text-lg font-bold text-gray-800 mb-1">Weekly Schedule</h4>
-          <p className="text-sm text-gray-600">Routine Option {index + 1}</p>
+        <div className="mb-3 sm:mb-4">
+          <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-1">Weekly Schedule</h4>
+          <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">
+            <span>Routine Option {index + 1}</span>
+            <span className="text-purple-600 font-medium">← Swipe to see all days →</span>
+          </p>
         </div>
 
         <div 
           id={`routine-grid-${index}`}
-          className="relative routine-calendar-container"
-          style={{ height: 'auto' }}
+          className="relative routine-calendar-container overflow-x-auto scrollbar-hide"
+          style={{ height: 'auto', minHeight: '500px' }}
           data-active-days={activeDayIndices.join(',')}
         >
           <style>{`
+            /* Hide scrollbar but keep functionality */
+            #routine-grid-${index}::-webkit-scrollbar {
+              display: none;
+            }
+            
+            #routine-grid-${index} {
+              -ms-overflow-style: none;
+              scrollbar-width: none;
+            }
+
+            /* Force horizontal scroll with fixed day widths */
+            #routine-grid-${index} .rbc-calendar {
+              min-width: 100%;
+              width: max-content;
+            }
+
+            #routine-grid-${index} .rbc-time-view {
+              min-width: 100%;
+              width: max-content;
+            }
+
+            /* Make each day column take more width for better readability */
+            #routine-grid-${index} .rbc-day-slot {
+              min-width: 50vw !important;
+              width: 50vw !important;
+              flex: 0 0 50vw !important;
+            }
+
+            #routine-grid-${index} .rbc-header {
+              min-width: 50vw !important;
+              width: 50vw !important;
+              flex: 0 0 50vw !important;
+            }
+
+            /* When downloading, adjust to fixed width */
+            #routine-grid-${index}[data-downloading="true"] .rbc-day-slot {
+              min-width: 300px !important;
+              width: 300px !important;
+              flex: 0 0 300px !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              gap: 0 !important;
+              border: none !important;
+            }
+
+            #routine-grid-${index}[data-downloading="true"] .rbc-header {
+              min-width: 300px !important;
+              width: 300px !important;
+              flex: 0 0 300px !important;
+              margin: 0 !important;
+              padding: 8px 6px !important;
+              gap: 0 !important;
+              border: none !important;
+            }
+
+            #routine-grid-${index}[data-downloading="true"] .rbc-time-view {
+              gap: 0 !important;
+              border: none !important;
+            }
+
+            #routine-grid-${index}[data-downloading="true"] .rbc-calendar {
+              gap: 0 !important;
+              border: none !important;
+            }
+
+            #routine-grid-${index}[data-downloading="true"] * {
+              gap: 0 !important;
+            }
+
+            @media (min-width: 640px) {
+              #routine-grid-${index} .rbc-day-slot {
+                min-width: 35vw !important;
+                width: 35vw !important;
+                flex: 0 0 35vw !important;
+              }
+
+              #routine-grid-${index} .rbc-header {
+                min-width: 35vw !important;
+                width: 35vw !important;
+                flex: 0 0 35vw !important;
+              }
+            }
+
+            @media (min-width: 1024px) {
+              #routine-grid-${index} .rbc-day-slot {
+                min-width: 28vw !important;
+                width: 28vw !important;
+                flex: 0 0 28vw !important;
+              }
+
+              #routine-grid-${index} .rbc-header {
+                min-width: 28vw !important;
+                width: 28vw !important;
+                flex: 0 0 28vw !important;
+              }
+            }
+
+            /* Adjust time gutter to be fixed */
+            #routine-grid-${index} .rbc-time-header-gutter,
+            #routine-grid-${index} .rbc-time-gutter {
+              position: sticky;
+              left: 0;
+              z-index: 10;
+              background: white;
+              min-width: 60px;
+              width: 60px;
+            }
+
+            @media (min-width: 640px) {
+              #routine-grid-${index} .rbc-time-header-gutter,
+              #routine-grid-${index} .rbc-time-gutter {
+                min-width: 70px;
+                width: 70px;
+              }
+            }
+
+            /* Responsive font sizes */
+            #routine-grid-${index} .rbc-calendar {
+              font-size: 0.75rem;
+            }
+            
+            @media (min-width: 640px) {
+              #routine-grid-${index} .rbc-calendar {
+                font-size: 0.875rem;
+              }
+            }
+
+            @media (min-width: 1024px) {
+              #routine-grid-${index} .rbc-calendar {
+                font-size: 1rem;
+              }
+            }
+
+            #routine-grid-${index} .rbc-event {
+              padding: 6px 8px;
+              font-size: 0.7rem;
+            }
+
+            @media (min-width: 640px) {
+              #routine-grid-${index} .rbc-event {
+                padding: 8px 10px;
+                font-size: 0.75rem;
+              }
+            }
+
+            @media (min-width: 1024px) {
+              #routine-grid-${index} .rbc-event {
+                padding: 10px 12px;
+                font-size: 0.875rem;
+              }
+            }
+
+            #routine-grid-${index} .rbc-header {
+              padding: 8px 6px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              background: #f9fafb;
+              border-bottom: 2px solid #e5e7eb !important;
+            }
+
+            @media (min-width: 640px) {
+              #routine-grid-${index} .rbc-header {
+                padding: 10px 8px;
+                font-size: 0.875rem;
+              }
+            }
+
+            @media (min-width: 1024px) {
+              #routine-grid-${index} .rbc-header {
+                padding: 12px 10px;
+                font-size: 1rem;
+              }
+            }
+
+            #routine-grid-${index} .rbc-label {
+              font-size: 0.7rem;
+              padding: 4px 6px;
+              text-align: center !important;
+              width: 100% !important;
+            }
+
+            @media (min-width: 640px) {
+              #routine-grid-${index} .rbc-label {
+                font-size: 0.75rem;
+                padding: 4px 8px;
+                text-align: center !important;
+                width: 100% !important;
+              }
+            }
+
+            @media (min-width: 1024px) {
+              #routine-grid-${index} .rbc-label {
+                font-size: 0.875rem;
+                padding: 6px 10px;
+                text-align: center !important;
+                width: 100% !important;
+              }
+            }
+
+            /* Full height for time slots */
+            #routine-grid-${index} .rbc-time-content {
+              height: auto;
+              min-height: 100%;
+            }
+
+            #routine-grid-${index} .rbc-timeslot-group {
+              min-height: 60px;
+            }
+            
+
             #routine-grid-${index} * {
               border-color: transparent !important;
             }
@@ -565,6 +792,15 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
 
             #routine-grid-${index} .rbc-time-header-gutter {
               border: none !important;
+              background: transparent !important;
+              visibility: hidden !important;
+              min-width: 0 !important;
+              width: 0 !important;
+            }
+
+            #routine-grid-${index} .rbc-event-label {
+              display: none !important;
+            }
             }
 
             #routine-grid-${index} .rbc-header {
@@ -602,28 +838,7 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
           />
         </div>
 
-        {/* Course Legend */}
-        <div className="mt-4 pt-3 border-t border-gray-200">
-          <h5 className="text-sm font-semibold text-gray-700 mb-2">Course Legend</h5>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">
-            {Array.from(courseColors.entries()).map(([courseTitle, colorClass]) => {
-              const section = routine.sections.find(s => s['Course Title'] === courseTitle)
-              return (
-                <div key={courseTitle} className="flex items-center gap-1">
-                  <div className={`w-3 h-3 rounded ${colorClass} border`}></div>
-                  <div className="text-xs flex-1 min-w-0">
-                    <div className="font-medium text-gray-900 truncate">{courseTitle}</div>
-                    {section && (
-                      <div className="text-gray-600 truncate">
-                        Sec {section.Section} • {section.Status}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
+        {/* Course Legend - Removed as requested */}
       </div>
     </div>
   )
