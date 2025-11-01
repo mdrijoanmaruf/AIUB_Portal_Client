@@ -160,6 +160,8 @@ const AutoScheduleMaking: React.FC<AutoScheduleMakingProps> = ({
                 startTime={startTime}
                 endTime={endTime}
                 allSections={allSections}
+                selectedStatuses={selectedStatuses}
+                minSeats={minSeats}
                 onDownload={downloadRoutineImage}
                 onSave={saveRoutine}
               />

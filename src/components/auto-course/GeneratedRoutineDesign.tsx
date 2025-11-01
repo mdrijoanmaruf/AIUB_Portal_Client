@@ -35,6 +35,8 @@ interface GeneratedRoutineDesignProps {
   startTime: string
   endTime: string
   allSections: CourseSection[]
+  selectedStatuses: string[]
+  minSeats: string
   onDownload: (index: number) => void
   onSave: (routine: Routine) => void
 }
@@ -49,6 +51,8 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
   onDownload,
   onSave,
   allSections,
+  selectedStatuses,
+  minSeats,
 }) => {
   const router = useRouter()
 
@@ -199,13 +203,29 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
                         const secTitle = normalize(sec['Course Title'])
                         if (secTitle !== normTitle && !secTitle.includes(normTitle) && !normTitle.includes(secTitle)) return false
 
-                        // Section must have a time on the same day and overlapping this section's time
+                        // Apply status filter - only show sections with selected status
+                        if (selectedStatuses.length > 0 && !selectedStatuses.includes(sec.Status)) return false
+
+                        // Apply minimum seats filter
+                        if (minSeats) {
+                          const availableSeats = parseInt(sec.Capacity) - parseInt(sec.Count)
+                          const minSeatsValue = minSeats === '30+' ? 30 : parseInt(minSeats)
+                          if (availableSeats < minSeatsValue) return false
+                        }
+
+                        // Section must have EXACTLY one time entry on this specific day that overlaps with the selected section's time
+                        // This prevents mixing sections from different days that happen to have the same time
+                        const dayNorm = normalizeDay(day)
+                        const selStart = timeToMinutes(sectionTimeInfo['Start Time'])
+                        const selEnd = timeToMinutes(sectionTimeInfo['End Time'])
+
                         return sec.Time.some((t: any) => {
-                          if (normalizeDay(t.Day) !== normalizeDay(day)) return false
+                          // Must match the exact day we're rendering
+                          if (normalizeDay(t.Day) !== dayNorm) return false
+                          
+                          // Must overlap the time window of the selected section for this day
                           const sStart = timeToMinutes(t['Start Time'])
                           const sEnd = timeToMinutes(t['End Time'])
-                          const selStart = timeToMinutes(sectionTimeInfo['Start Time'])
-                          const selEnd = timeToMinutes(sectionTimeInfo['End Time'])
                           return sStart < selEnd && sEnd > selStart
                         })
                       })
@@ -229,7 +249,12 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
                         const height = (duration / 60) * 64
                         const colorClass = courseColors.get(courseTitle) || 'bg-gray-100 border-gray-300 text-gray-900'
 
-                        const sectionList = matchingSections.map((s: CourseSection) => s.Section).join(', ')
+                        // Build section list with capacity for each section (Count/Capacity format)
+                        const sectionListWithCapacity = matchingSections.map((s: CourseSection) => {
+                          const count = parseInt(s.Count)
+                          const capacity = parseInt(s.Capacity)
+                          return `${s.Section} (${count}/${capacity})`
+                        }).join(', ')
 
                         return (
                           <div
@@ -244,7 +269,7 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
                               {courseTitle}
                             </div>
                             <div className="text-xs leading-tight">
-                              Sec: {sectionList || routine.sections.find(s => s['Course Title'] === courseTitle)?.Section}
+                              Sec: {sectionListWithCapacity || `${routine.sections.find(s => s['Course Title'] === courseTitle)?.Section}`}
                             </div>
                             <div className="text-xs opacity-75 leading-tight">
                               {timeInfo['Start Time']} - {timeInfo['End Time']}

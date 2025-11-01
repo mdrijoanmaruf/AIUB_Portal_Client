@@ -1,4 +1,5 @@
 import React from 'react'
+import Swal from 'sweetalert2'
 
 interface CourseSection {
   _id: string
@@ -107,12 +108,19 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
 
     const maxGapMinutes = parseInt(maxGap)
 
-    // Collect all time slots
-    const allTimeSlots: { day: string; start: number; end: number }[] = []
+    // Collect time slots grouped by course (to handle multi-slot courses correctly)
+    const courseTimeSlots: { 
+      courseId: string
+      day: string
+      start: number
+      end: number 
+    }[] = []
 
     sections.forEach(section => {
+      const courseId = section['Course Title'] // Use course title as identifier
       section.Time.forEach(time => {
-        allTimeSlots.push({
+        courseTimeSlots.push({
+          courseId,
           day: time.Day,
           start: timeToMinutes(time['Start Time']),
           end: timeToMinutes(time['End Time'])
@@ -120,21 +128,37 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
       })
     })
 
-    // Group by day and check gaps
-    const dayGroups = allTimeSlots.reduce((groups, slot) => {
+    // Group by day
+    const dayGroups = courseTimeSlots.reduce((groups, slot) => {
       if (!groups[slot.day]) groups[slot.day] = []
       groups[slot.day].push(slot)
       return groups
-    }, {} as Record<string, typeof allTimeSlots>)
+    }, {} as Record<string, typeof courseTimeSlots>)
 
     // Check gaps for each day
     for (const day in dayGroups) {
       const daySlots = dayGroups[day].sort((a, b) => a.start - b.start)
 
-      for (let i = 1; i < daySlots.length; i++) {
-        const gap = daySlots[i].start - daySlots[i-1].end
-        if (gap > maxGapMinutes) {
-          return false
+      // Merge overlapping or adjacent slots from the same course
+      const mergedSlots: { start: number; end: number }[] = []
+      
+      for (const slot of daySlots) {
+        if (mergedSlots.length === 0) {
+          mergedSlots.push({ start: slot.start, end: slot.end })
+        } else {
+          const last = mergedSlots[mergedSlots.length - 1]
+          
+          // If this slot overlaps or is adjacent to the last merged slot, extend the last slot
+          if (slot.start <= last.end) {
+            last.end = Math.max(last.end, slot.end)
+          } else {
+            // Check gap between last merged slot and current slot
+            const gap = slot.start - last.end
+            if (gap > maxGapMinutes) {
+              return false
+            }
+            mergedSlots.push({ start: slot.start, end: slot.end })
+          }
         }
       }
     }
@@ -199,7 +223,8 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
 
     // Use setTimeout to allow UI to update
     setTimeout(() => {
-      try {
+      ;(async () => {
+        try {
         // Group sections by course
         const normalizeName = (name: string) =>
           name.replace(/\s*\[[A-Z0-9]\]\s*$/i, '').trim().toUpperCase()
@@ -230,14 +255,19 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
 
         if (missingCourses.length > 0) {
           console.log('Missing sections for courses:', missingCourses)
-          // report summary and notify user
+          // report summary
           setGenerationSummary({
             totalPossible: 0,
             combinationsGenerated: 0,
             missingCourses,
             perCourseCounts: Object.fromEntries(Array.from(sectionsByCourse.entries()).map(([k, v]) => [k, v.length]))
           })
-          alert(`No available sections found for the following courses: ${missingCourses.join(', ')}. Please adjust your filters or select different courses.`)
+          // Show SweetAlert instead of native alert
+          await Swal.fire({
+            icon: 'warning',
+            title: 'No available sections',
+            html: `No available sections found for the following courses:<br><strong>${missingCourses.join(', ')}</strong><br>Please adjust your filters or select different courses.`,
+          })
           setIsGenerating(false)
           return
         }
@@ -263,11 +293,24 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
         })
 
         if (totalPossible > 200) {
-          const proceed = confirm(`This will generate approximately ${totalPossible} possible routines. Only the first 50 will be displayed. This may take a while. Do you want to proceed?`)
-          if (!proceed) {
-            setIsGenerating(false)
-            return
-          }
+          await Swal.fire({
+            title: 'This may take a while',
+            html: `This will generate approximately <strong>${totalPossible.toLocaleString()}</strong> possible routines. Only the first 20 will be displayed.`,
+            icon: 'info',
+            timer: 2000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+          })
+
+          // Show a loading modal immediately after the warning
+          Swal.fire({
+            title: 'Generating...',
+            html: 'Please wait while we compute routines.',
+            allowOutsideClick: false,
+            didOpen: () => {
+              Swal.showLoading()
+            }
+          })
         }
 
         const generateCombinations = (index: number, current: CourseSection[]) => {
@@ -321,13 +364,13 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
             conflicts: 0
           }))
 
-        // Limit to 50 routines if there are more than 50
-        const isLimited = routines.length > 50
+        // Limit to 20 routines if there are more than 20
+        const isLimited = routines.length > 20
         if (isLimited) {
-          routines = routines.slice(0, 50)
+          routines = routines.slice(0, 20)
         }
 
-        console.log('Final complete routines:', routines.length, isLimited ? '(showing first 50 of many)' : '(showing all)')
+        console.log('Final complete routines:', routines.length, isLimited ? '(showing first 20 of many)' : '(showing all)')
         // Update summary with final counts
         setGenerationSummary({
           totalPossible,
@@ -336,11 +379,18 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
           perCourseCounts: Object.fromEntries(Array.from(sectionsByCourse.entries()).map(([k, v]) => [k, v.length]))
         })
         setGeneratedRoutines(routines)
-      } catch (error) {
-        console.error('Error generating routines:', error)
-      } finally {
-        setIsGenerating(false)
-      }
+        } catch (error) {
+          console.error('Error generating routines:', error)
+        } finally {
+          // Close any SweetAlert loading modal if open
+          try {
+            Swal.close()
+          } catch (e) {
+            // ignore
+          }
+          setIsGenerating(false)
+        }
+      })()
     }, 100)
   }
 
