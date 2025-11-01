@@ -92,6 +92,7 @@ const AutoRoutineGenerate = () => {
           maxGap={dataProps.maxGap}
           setIsGenerating={dataProps.setIsGenerating}
           setGeneratedRoutines={dataProps.setGeneratedRoutines}
+          setGenerationSummary={dataProps.setGenerationSummary}
         >
           {(logicProps) => (
             <div className="min-h-screen bg-gray-50 text-gray-900">
@@ -140,6 +141,7 @@ const AutoRoutineGenerate = () => {
                   maxGap={dataProps.maxGap}
                   isGenerating={dataProps.isGenerating}
                   generatedRoutines={dataProps.generatedRoutines}
+                  generationSummary={dataProps.generationSummary}
                   setStartTime={dataProps.setStartTime}
                   setEndTime={dataProps.setEndTime}
                   setSelectedDays={dataProps.setSelectedDays}

@@ -46,6 +46,12 @@ interface AutoScheduleMakingProps {
   setMaxGap: (gap: string) => void
   generateRoutines: () => void
   DAYS: string[]
+  generationSummary?: {
+    totalPossible: number
+    combinationsGenerated: number
+    missingCourses: string[]
+    perCourseCounts?: Record<string, number>
+  } | null
 }
 
 const AutoScheduleMaking: React.FC<AutoScheduleMakingProps> = ({
@@ -66,7 +72,8 @@ const AutoScheduleMaking: React.FC<AutoScheduleMakingProps> = ({
   setMinSeats,
   setMaxGap,
   generateRoutines,
-  DAYS
+  DAYS,
+  generationSummary
 }) => {
 
   const timeToMinutes = (time: string): number => {
@@ -161,8 +168,43 @@ const AutoScheduleMaking: React.FC<AutoScheduleMakingProps> = ({
         </div>
       )}
 
-      {/* No Routines Found */}
-      {!isGenerating && generatedRoutines.length === 0 && allSections.length > 0 && (
+      {/* No Routines Found - provide clearer explanation when combinations existed */}
+      {!isGenerating && generatedRoutines.length === 0 && allSections.length > 0 && generationSummary && generationSummary.totalPossible > 0 && (
+        <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm text-center">
+          <FiCalendar className="h-16 w-16 text-orange-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            No Complete Routines Could Be Generated
+          </h3>
+          <p className="text-gray-600 text-sm mb-4">
+            We estimated approximately <strong>{generationSummary.totalPossible.toLocaleString()}</strong> possible combinations, but none of the complete schedules passed your conflict and gap rules.
+          </p>
+          <div className="text-left max-w-2xl mx-auto text-sm text-gray-600 space-y-2">
+            <p className="font-medium">Per-course available section counts (after applying your filters):</p>
+            <ul className="list-disc ml-6">
+              {generationSummary.perCourseCounts && Object.entries(generationSummary.perCourseCounts).map(([course, count]) => (
+                <li key={course}>{course}: {count}</li>
+              ))}
+            </ul>
+            <p className="mt-3">Try relaxing your filters (wider time range, more days selected, increase maximum gap, or lower minimum seats) to allow complete routines.</p>
+          </div>
+          <button
+            onClick={() => {
+              setStartTime('08:00')
+              setEndTime('19:00')
+              setSelectedDays(DAYS)
+              setSelectedStatuses([])
+              setMinSeats('')
+              setMaxGap('')
+            }}
+            className="mt-6 px-6 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg font-medium transition-colors"
+          >
+            Reset Filters to Default
+          </button>
+        </div>
+      )}
+
+      {/* Generic No Routines Found (no sections loaded or no possible combinations) */}
+      {!isGenerating && generatedRoutines.length === 0 && allSections.length > 0 && (!generationSummary || generationSummary.totalPossible === 0) && (
         <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm text-center">
           <FiCalendar className="h-16 w-16 text-orange-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-800 mb-2">

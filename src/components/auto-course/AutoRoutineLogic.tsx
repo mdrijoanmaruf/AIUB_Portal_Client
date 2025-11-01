@@ -35,6 +35,12 @@ interface AutoRoutineLogicProps {
   maxGap: string
   setIsGenerating: (generating: boolean) => void
   setGeneratedRoutines: (routines: Routine[]) => void
+  setGenerationSummary: (summary: {
+    totalPossible: number
+    combinationsGenerated: number
+    missingCourses: string[]
+    perCourseCounts?: Record<string, number>
+  } | null) => void
   children: (props: {
     generateRoutines: () => void
     timeToMinutes: (time: string) => number
@@ -55,6 +61,7 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
   maxGap,
   setIsGenerating,
   setGeneratedRoutines,
+  setGenerationSummary,
   children
 }) => {
   const timeToMinutes = (time: string): number => {
@@ -187,6 +194,8 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
 
     setIsGenerating(true)
     setGeneratedRoutines([])
+  // reset previous summary
+  setGenerationSummary(null)
 
     // Use setTimeout to allow UI to update
     setTimeout(() => {
@@ -221,6 +230,13 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
 
         if (missingCourses.length > 0) {
           console.log('Missing sections for courses:', missingCourses)
+          // report summary and notify user
+          setGenerationSummary({
+            totalPossible: 0,
+            combinationsGenerated: 0,
+            missingCourses,
+            perCourseCounts: Object.fromEntries(Array.from(sectionsByCourse.entries()).map(([k, v]) => [k, v.length]))
+          })
           alert(`No available sections found for the following courses: ${missingCourses.join(', ')}. Please adjust your filters or select different courses.`)
           setIsGenerating(false)
           return
@@ -237,6 +253,14 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
         }, 1)
 
         console.log('Estimated total possible combinations:', totalPossible)
+
+        // Report preliminary summary (before generation)
+        setGenerationSummary({
+          totalPossible,
+          combinationsGenerated: 0,
+          missingCourses: [],
+          perCourseCounts: Object.fromEntries(Array.from(sectionsByCourse.entries()).map(([k, v]) => [k, v.length]))
+        })
 
         if (totalPossible > 200) {
           const proceed = confirm(`This will generate approximately ${totalPossible} possible routines. Only the first 50 will be displayed. This may take a while. Do you want to proceed?`)
@@ -304,6 +328,13 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
         }
 
         console.log('Final complete routines:', routines.length, isLimited ? '(showing first 50 of many)' : '(showing all)')
+        // Update summary with final counts
+        setGenerationSummary({
+          totalPossible,
+          combinationsGenerated: routines.length,
+          missingCourses: [],
+          perCourseCounts: Object.fromEntries(Array.from(sectionsByCourse.entries()).map(([k, v]) => [k, v.length]))
+        })
         setGeneratedRoutines(routines)
       } catch (error) {
         console.error('Error generating routines:', error)

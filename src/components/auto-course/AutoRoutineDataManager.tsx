@@ -48,6 +48,18 @@ interface AutoRoutineDataManagerProps {
     setMaxGap: (gap: string) => void
     setIsGenerating: (generating: boolean) => void
     setGeneratedRoutines: (routines: Routine[]) => void
+    generationSummary: {
+      totalPossible: number
+      combinationsGenerated: number
+      missingCourses: string[]
+      perCourseCounts?: Record<string, number>
+    } | null
+    setGenerationSummary: (summary: {
+      totalPossible: number
+      combinationsGenerated: number
+      missingCourses: string[]
+      perCourseCounts?: Record<string, number>
+    } | null) => void
 
     // Actions
     toggleDay: (day: string) => void
@@ -70,6 +82,12 @@ const AutoRoutineDataManager: React.FC<AutoRoutineDataManagerProps> = ({ childre
   const [generatedRoutines, setGeneratedRoutines] = useState<Routine[]>([])
   const [allSections, setAllSections] = useState<CourseSection[]>([])
   const [isLoadingSections, setIsLoadingSections] = useState(true)
+  const [generationSummary, setGenerationSummary] = useState<{
+    totalPossible: number
+    combinationsGenerated: number
+    missingCourses: string[]
+    perCourseCounts?: Record<string, number>
+  } | null>(null)
 
   useEffect(() => {
     // Load selected courses from localStorage
@@ -199,6 +217,8 @@ const AutoRoutineDataManager: React.FC<AutoRoutineDataManagerProps> = ({ childre
         setMaxGap,
         setIsGenerating,
         setGeneratedRoutines,
+  generationSummary,
+  setGenerationSummary,
 
         // Actions
         toggleDay,
