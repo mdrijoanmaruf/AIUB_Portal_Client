@@ -78,22 +78,53 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
 
   const normalizeDay = (d: string) => d.trim().slice(0,3).toLowerCase()
 
-  // Generate time slots for the timetable grid (every 1 hour)
-  const generateTimeSlots = () => {
-    const slots: string[] = []
-    const start = timeToMinutes(startTime)
-    const end = timeToMinutes(endTime)
+  // Get unique days used in this routine
+  const getUsedDays = () => {
+    const usedDays = new Set<string>()
+    routine.sections.forEach(section => {
+      section.Time.forEach(time => {
+        usedDays.add(time.Day)
+      })
+    })
+    // Return only selected days that are actually used in the routine
+    return selectedDays.filter(day => 
+      Array.from(usedDays).some(usedDay => normalizeDay(usedDay) === normalizeDay(day))
+    )
+  }
 
-    for (let minutes = start; minutes <= end; minutes += 60) { // Changed from 30 to 60 minutes
-      const hours = Math.floor(minutes / 60)
-      const mins = minutes % 60
+  // Generate time slots based on actual classes in the routine (every 1 hour)
+  const generateTimeSlots = () => {
+    // Find the earliest and latest times used in the routine
+    let earliestMinutes = Infinity
+    let latestMinutes = 0
+
+    routine.sections.forEach(section => {
+      section.Time.forEach(time => {
+        const start = timeToMinutes(time['Start Time'])
+        const end = timeToMinutes(time['End Time'])
+        earliestMinutes = Math.min(earliestMinutes, start)
+        latestMinutes = Math.max(latestMinutes, end)
+      })
+    })
+
+    // If no classes found, return empty
+    if (earliestMinutes === Infinity) return []
+
+    // Round down to nearest hour for start, round up to nearest hour for end
+    const startHour = Math.floor(earliestMinutes / 60)
+    const endHour = Math.ceil(latestMinutes / 60)
+
+    const slots: string[] = []
+    for (let hours = startHour; hours <= endHour; hours++) {
       const hour12 = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
       const ampm = hours >= 12 ? 'PM' : 'AM'
-      slots.push(`${hour12}:${mins.toString().padStart(2, '0')} ${ampm}`)
+      slots.push(`${hour12}:00 ${ampm}`)
     }
 
     return slots
   }
+
+  const usedDays = getUsedDays()
 
   const saveRoutine = (routine: Routine) => {
     localStorage.setItem('myRoutineSections', JSON.stringify(routine.sections))
@@ -160,13 +191,15 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
 
         <div className="relative">
           {/* Time slots and grid */}
-          <div className={`grid gap-1 min-h-[300px] border border-gray-300 rounded-lg overflow-hidden bg-gray-50`}
-               style={{ gridTemplateColumns: `100px repeat(${selectedDays.length}, 1fr)` }}>
-            {/* Header row with selected days */}
+          <div 
+            id={`routine-grid-${index}`}
+            className={`grid gap-1 min-h-[300px] border border-gray-300 rounded-lg overflow-hidden bg-gray-50`}
+               style={{ gridTemplateColumns: `100px repeat(${usedDays.length}, 1fr)` }}>
+            {/* Header row with used days */}
             <div className="bg-gray-100 border-b border-gray-300 p-1 text-center font-semibold text-gray-700 text-xs">
               Time
             </div>
-            {selectedDays.map(day => (
+            {usedDays.map(day => (
               <div key={day} className="bg-gray-100 border-b border-gray-300 p-1 text-center font-semibold text-gray-700 text-xs">
                 {day.slice(0, 3)}
               </div>
@@ -180,8 +213,8 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
                   {timeSlot}
                 </div>
 
-                {/* Selected day columns */}
-                {selectedDays.map(day => {
+                {/* Used day columns */}
+                {usedDays.map(day => {
                   const slotStart = timeToMinutes(timeSlot)
                   const slotEnd = slotStart + 60
 

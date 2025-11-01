@@ -98,7 +98,7 @@ const AutoScheduleMaking: React.FC<AutoScheduleMakingProps> = ({
 
   // Download routine as image
   const downloadRoutineImage = async (index: number) => {
-    const element = document.getElementById(`routine-${index}`)
+    const element = document.getElementById(`routine-grid-${index}`)
     if (!element) return
 
     try {
