@@ -299,44 +299,160 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
     return events
   }, [routine, allSections, selectedStatuses, minSeats])
 
-  // Custom event style getter
+  // Custom event style getter with professional color combinations
   const eventStyleGetter = (event: any) => {
     const colorClass = courseColors.get(event.resource.courseTitle)
-    const colorMap: Record<string, { backgroundColor: string; borderColor: string }> = {
-      'bg-blue-100 border-blue-300 text-blue-900': { backgroundColor: '#DBEAFE', borderColor: '#93C5FD' },
-      'bg-purple-100 border-purple-300 text-purple-900': { backgroundColor: '#E9D5FF', borderColor: '#C084FC' },
-      'bg-green-100 border-green-300 text-green-900': { backgroundColor: '#D1FAE5', borderColor: '#6EE7B7' },
-      'bg-orange-100 border-orange-300 text-orange-900': { backgroundColor: '#FFEDD5', borderColor: '#FDBA74' },
-      'bg-pink-100 border-pink-300 text-pink-900': { backgroundColor: '#FCE7F3', borderColor: '#F9A8D4' },
-      'bg-cyan-100 border-cyan-300 text-cyan-900': { backgroundColor: '#CFFAFE', borderColor: '#67E8F9' },
-      'bg-indigo-100 border-indigo-300 text-indigo-900': { backgroundColor: '#E0E7FF', borderColor: '#A5B4FC' },
-      'bg-teal-100 border-teal-300 text-teal-900': { backgroundColor: '#CCFBF1', borderColor: '#5EEAD4' },
+    const colorMap: Record<string, { background: string; titleColor: string; sectionColor: string; classColor: string }> = {
+      'bg-blue-100 border-blue-300 text-blue-900': { 
+        background: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)', // Deep Blue
+        titleColor: '#ffffff',
+        sectionColor: '#fbbf24', // Amber
+        classColor: '#e0e7ff'
+      },
+      'bg-purple-100 border-purple-300 text-purple-900': { 
+        background: 'linear-gradient(135deg, #7c3aed 0%, #6b21a8 100%)', // Rich Purple
+        titleColor: '#ffffff',
+        sectionColor: '#a78bfa', // Light Purple
+        classColor: '#fde047'
+      },
+      'bg-green-100 border-green-300 text-green-900': { 
+        background: 'linear-gradient(135deg, #059669 0%, #047857 100%)', // Emerald Green
+        titleColor: '#ffffff',
+        sectionColor: '#fcd34d', // Yellow
+        classColor: '#d1fae5'
+      },
+      'bg-orange-100 border-orange-300 text-orange-900': { 
+        background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)', // Vibrant Orange
+        titleColor: '#ffffff',
+        sectionColor: '#fed7aa', // Peach
+        classColor: '#fef3c7'
+      },
+      'bg-pink-100 border-pink-300 text-pink-900': { 
+        background: 'linear-gradient(135deg, #db2777 0%, #be185d 100%)', // Hot Pink
+        titleColor: '#ffffff',
+        sectionColor: '#fcd34d', // Yellow
+        classColor: '#fce7f3'
+      },
+      'bg-cyan-100 border-cyan-300 text-cyan-900': { 
+        background: 'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)', // Cyan
+        titleColor: '#ffffff',
+        sectionColor: '#fde047', // Yellow
+        classColor: '#cffafe'
+      },
+      'bg-indigo-100 border-indigo-300 text-indigo-900': { 
+        background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)', // Indigo
+        titleColor: '#ffffff',
+        sectionColor: '#a5f3fc', // Light Cyan
+        classColor: '#e0e7ff'
+      },
+      'bg-teal-100 border-teal-300 text-teal-900': { 
+        background: 'linear-gradient(135deg, #0d9488 0%, #115e59 100%)', // Teal
+        titleColor: '#ffffff',
+        sectionColor: '#fbbf24', // Amber
+        classColor: '#ccfbf1'
+      },
     }
 
-    const colors = colorMap[colorClass || ''] || { backgroundColor: '#F3F4F6', borderColor: '#D1D5DB' }
+    const colors = colorMap[colorClass || ''] || { 
+      background: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)',
+      titleColor: '#ffffff',
+      sectionColor: '#fbbf24',
+      classColor: '#e0e7ff'
+    }
 
     return {
       style: {
-        backgroundColor: colors.backgroundColor,
-        borderLeft: `4px solid ${colors.borderColor}`,
-        color: '#1F2937',
-        borderRadius: '4px',
+        background: colors.background,
+        color: colors.titleColor,
+        borderRadius: '6px',
         opacity: 1,
         display: 'block',
-        fontSize: '0.75rem',
-        padding: '2px 4px'
-      }
+        fontSize: '0.875rem',
+        padding: '8px 10px',
+        border: 'none',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      },
+      titleColor: colors.titleColor,
+      sectionColor: colors.sectionColor,
+      classColor: colors.classColor
     }
   }
 
-  // Custom event component
-  const CustomEvent = ({ event }: any) => (
-    <div className="text-xs">
-      <div className="font-semibold truncate">{event.title}</div>
-      <div className="truncate">Sec: {event.resource.section}</div>
-      <div className="opacity-75 truncate">{event.resource.className}</div>
-    </div>
-  )
+  // Custom event component with dynamic colors
+  const CustomEvent = ({ event }: any) => {
+    const colorClass = courseColors.get(event.resource.courseTitle)
+    const colorMap: Record<string, { background: string; titleColor: string; sectionColor: string; classColor: string }> = {
+      'bg-blue-100 border-blue-300 text-blue-900': { 
+        background: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)',
+        titleColor: '#ffffff',
+        sectionColor: '#fbbf24',
+        classColor: '#e0e7ff'
+      },
+      'bg-purple-100 border-purple-300 text-purple-900': { 
+        background: 'linear-gradient(135deg, #7c3aed 0%, #6b21a8 100%)',
+        titleColor: '#ffffff',
+        sectionColor: '#a78bfa',
+        classColor: '#fde047'
+      },
+      'bg-green-100 border-green-300 text-green-900': { 
+        background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+        titleColor: '#ffffff',
+        sectionColor: '#fcd34d',
+        classColor: '#d1fae5'
+      },
+      'bg-orange-100 border-orange-300 text-orange-900': { 
+        background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+        titleColor: '#ffffff',
+        sectionColor: '#fed7aa',
+        classColor: '#fef3c7'
+      },
+      'bg-pink-100 border-pink-300 text-pink-900': { 
+        background: 'linear-gradient(135deg, #db2777 0%, #be185d 100%)',
+        titleColor: '#ffffff',
+        sectionColor: '#fcd34d',
+        classColor: '#fce7f3'
+      },
+      'bg-cyan-100 border-cyan-300 text-cyan-900': { 
+        background: 'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)',
+        titleColor: '#ffffff',
+        sectionColor: '#fde047',
+        classColor: '#cffafe'
+      },
+      'bg-indigo-100 border-indigo-300 text-indigo-900': { 
+        background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)',
+        titleColor: '#ffffff',
+        sectionColor: '#a5f3fc',
+        classColor: '#e0e7ff'
+      },
+      'bg-teal-100 border-teal-300 text-teal-900': { 
+        background: 'linear-gradient(135deg, #0d9488 0%, #115e59 100%)',
+        titleColor: '#ffffff',
+        sectionColor: '#fbbf24',
+        classColor: '#ccfbf1'
+      },
+    }
+    
+    const colors = colorMap[colorClass || ''] || { 
+      background: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)',
+      titleColor: '#ffffff',
+      sectionColor: '#fbbf24',
+      classColor: '#e0e7ff'
+    }
+
+    return (
+      <div className="text-xs space-y-1">
+        <div className="font-bold text-base leading-tight" style={{ color: colors.titleColor }}>
+          {event.title}
+        </div>
+        <div className="text-sm font-bold leading-tight" style={{ color: colors.sectionColor }}>
+          Sec: {event.resource.section}
+        </div>
+        <div className="text-xs leading-tight" style={{ color: colors.classColor, opacity: 0.95 }}>
+          {event.resource.className}
+        </div>
+      </div>
+    )
+  }
 
   const saveRoutine = (routine: Routine) => {
     localStorage.setItem('myRoutineSections', JSON.stringify(routine.sections))
@@ -408,24 +524,60 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
           data-active-days={activeDayIndices.join(',')}
         >
           <style>{`
+            #routine-grid-${index} * {
+              border-color: transparent !important;
+            }
+
             #routine-grid-${index} .rbc-time-header-content .rbc-header {
               display: none;
+              border: none !important;
             }
             ${activeDayIndices.map(dayIdx => `
               #routine-grid-${index} .rbc-time-header-content .rbc-header:nth-child(${dayIdx + 1}) {
                 display: block;
+                border: none !important;
               }
             `).join('')}
             
             #routine-grid-${index} .rbc-time-content .rbc-day-slot {
               display: none;
+              border: none !important;
             }
             ${activeDayIndices.map((dayIdx, idx) => `
               #routine-grid-${index} .rbc-time-content .rbc-day-slot:nth-child(${dayIdx + 2}) {
                 display: block;
-                ${idx === 0 ? 'border-left: 1px solid #E5E7EB;' : ''}
+                border: none !important;
               }
             `).join('')}
+
+            #routine-grid-${index} .rbc-time-content {
+              border: none !important;
+            }
+
+            #routine-grid-${index} .rbc-time-slot,
+            #routine-grid-${index} .rbc-time-slot * {
+              border: none !important;
+            }
+
+            #routine-grid-${index} .rbc-timeslot-group {
+              border: none !important;
+            }
+
+            #routine-grid-${index} .rbc-time-header-gutter {
+              border: none !important;
+            }
+
+            #routine-grid-${index} .rbc-header {
+              border: none !important;
+            }
+
+            #routine-grid-${index} .rbc-time-header {
+              border: none !important;
+            }
+
+            #routine-grid-${index} .rbc-day-slot {
+              border: none !important;
+            }
           `}</style>
           <Calendar
             localizer={localizer}

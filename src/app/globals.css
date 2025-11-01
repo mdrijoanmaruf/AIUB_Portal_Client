@@ -28,7 +28,9 @@ body {
   font-weight: 600;
   font-size: 0.875rem;
   background-color: #F3F4F6;
-  border-bottom: 2px solid #D1D5DB;
+  border-bottom: none !important;
+  border-right: none !important;
+  border-left: none !important;
 }
 
 .rbc-time-view {
@@ -37,29 +39,62 @@ body {
   overflow: hidden;
 }
 
+.rbc-time-header {
+  background-color: white;
+  border-bottom: none !important;
+}
+
 .rbc-time-header-content {
-  border-left: 1px solid #E5E7EB;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
 }
 
 .rbc-time-content {
-  border-top: 1px solid #E5E7EB;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
 }
 
 .rbc-time-slot {
   min-height: 40px;
+  border-top: none !important;
+  border-bottom: none !important;
+  border-right: none !important;
+  border-left: none !important;
 }
 
 .rbc-timeslot-group {
-  border-left: 1px solid #E5E7EB;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+  border-top: none !important;
   min-height: 80px;
 }
 
+.rbc-day-slot {
+  border-right: none !important;
+  border-left: none !important;
+  border-bottom: none !important;
+}
+
 .rbc-day-slot .rbc-time-slot {
-  border-top: 1px solid #F3F4F6;
+  border-top: none !important;
+  border-bottom: none !important;
+  border-right: none !important;
+  border-left: none !important;
+}
+
+.rbc-time-content > div > div > div {
+  border: none !important;
 }
 
 .rbc-today {
   background-color: transparent;
+}
+
+.rbc-off-range-bg {
+  background-color: white;
 }
 
 .rbc-event {
@@ -67,25 +102,31 @@ body {
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.75rem;
+  border: none !important;
 }
 
 .rbc-event:focus {
   outline: 2px solid #3B82F6;
 }
 
-.rbc-time-header {
-  background-color: white;
-}
-
 .rbc-label {
   padding: 0 5px;
   font-size: 0.75rem;
   color: #6B7280;
+  border: none !important;
 }
 
 .rbc-current-time-indicator {
-  background-color: #EF4444;
-  height: 2px;
+  display: none;
+}
+
+/* Hide empty day columns dynamically */
+.rbc-time-header-content > .rbc-row:has(.rbc-header:empty) {
+  display: none;
+}
+
+.rbc-day-slot:has(.rbc-events-container:empty) {
+  display: none !important;
 }
 
 /* Hide empty day columns dynamically */
