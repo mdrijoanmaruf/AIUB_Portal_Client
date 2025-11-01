@@ -520,7 +520,7 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
         <div 
           id={`routine-grid-${index}`}
           className="relative routine-calendar-container"
-          style={{ height: '600px' }}
+          style={{ height: 'auto' }}
           data-active-days={activeDayIndices.join(',')}
         >
           <style>{`
