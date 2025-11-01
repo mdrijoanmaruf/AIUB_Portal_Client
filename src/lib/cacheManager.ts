@@ -51,8 +51,6 @@ class CacheManager {
       }, maxAge);
       
       this.timers.set(key, timer);
-      
-      console.log(`Cache set for ${key}, expires in ${maxAge}ms`);
     } catch (error) {
       console.error('Error setting cache:', error);
     }
@@ -95,7 +93,6 @@ class CacheManager {
       localStorage.removeItem(key);
       localStorage.removeItem(`${key}Timestamp`);
       this.clearTimer(key);
-      console.log(`Cache cleared for ${key}`);
     } catch (error) {
       console.error('Error clearing cache:', error);
     }
@@ -130,8 +127,6 @@ class CacheManager {
       keysToRemove.forEach(key => {
         localStorage.removeItem(key);
       });
-      
-      console.log('All caches cleared');
     } catch (error) {
       console.error('Error clearing all caches:', error);
     }
@@ -155,7 +150,6 @@ class CacheManager {
   initPageCache(router: any): void {
     // Set up auto logout after 5 minutes
     const autoLogoutTimer = setTimeout(() => {
-      console.log('Session expired - auto logout');
       this.autoLogout();
     }, this.DEFAULT_MAX_AGE);
 
@@ -166,7 +160,6 @@ class CacheManager {
     const resetTimer = () => {
       this.clearTimer('autoLogout');
       const newTimer = setTimeout(() => {
-        console.log('Session expired due to inactivity - auto logout');
         this.autoLogout();
       }, this.DEFAULT_MAX_AGE);
       this.timers.set('autoLogout', newTimer);

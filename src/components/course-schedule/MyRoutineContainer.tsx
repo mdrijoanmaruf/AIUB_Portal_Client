@@ -66,7 +66,6 @@ const MyRoutineContainer: React.FC = () => {
           try {
             const parsedCache = JSON.parse(cachedData)
             if (Array.isArray(parsedCache) && parsedCache.length > 0) {
-              console.log('Using cached course sections data')
               setAllSections(parsedCache)
               setIsLoading(false)
               return
@@ -78,7 +77,6 @@ const MyRoutineContainer: React.FC = () => {
       }
 
       // Fetch from server if no valid cache
-      console.log('Fetching fresh course sections from server')
       const response = await fetch('https://aiub-course-kappa.vercel.app/api/courses')
       const data = await response.json()
       if (data.success && Array.isArray(data.data)) {
@@ -120,12 +118,6 @@ const MyRoutineContainer: React.FC = () => {
         return hasMatchingTime
       })
       .map(s => s.Section)
-    
-    // Debug logging
-    console.log('Finding alternatives for:', courseTitle, currentSection)
-    console.log('Current times:', currentTimes)
-    console.log('Total sections available:', allSections.length)
-    console.log('Alternatives found:', alternatives)
     
     return alternatives
   }

@@ -204,27 +204,18 @@ const Home = () => {
       const cachedUserData = cacheManager.getCache('userData')
       
       if (cachedUserData && cachedUserData.studentId) {
-        console.log('Using cached user data')
         setUserData(cachedUserData)
         setLoading(false)
         
         // 🚀 Prefetch data silently in background (no UI indicator)
-        prefetchAllData(token).then(result => {
-          if (result.success) {
-            console.log('🎉 All data successfully prefetched:', result.cached.join(', '))
-          } else if (result.cached.length > 0) {
-            console.log('✅ Prefetched:', result.cached.join(', '))
-            console.warn('⚠️ Failed:', result.failed.join(', '))
-          }
-        }).catch(error => {
-          console.error('❌ Prefetch error:', error)
+        prefetchAllData(token).catch(error => {
+          console.error('Prefetch error:', error)
         })
         
         return
       }
       
       // Fetch fresh data if no valid cache
-      console.log('Fetching fresh user data from server')
       const response = await fetch(`${API_BASE}/user/data`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -240,7 +231,6 @@ const Home = () => {
           cacheManager.setCache('userData', result.data, {
             maxAge: 5 * 60 * 1000, // 5 minutes
             onExpiry: () => {
-              console.log('User data cache expired - logging out')
               cacheManager.autoLogout()
             }
           })
@@ -250,14 +240,8 @@ const Home = () => {
 
         // 🚀 AUTOMATIC DATA PREFETCH - Prefetch all page data silently in background
         // This runs asynchronously without blocking the UI
-        prefetchAllData(token).then(result => {
-          if (result.success) {
-            console.log('🎉 All data successfully prefetched:', result.cached.join(', '))
-          } else {
-            console.warn('⚠️ Some data failed to prefetch:', result.failed.join(', '))
-          }
-        }).catch(error => {
-          console.error('❌ Prefetch error:', error)
+        prefetchAllData(token).catch(error => {
+          console.error('Prefetch error:', error)
         })
       } else {
         // Token invalid or expired, redirect to login

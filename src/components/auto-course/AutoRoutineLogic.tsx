@@ -210,16 +210,10 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
   }
 
   const generateRoutines = () => {
-    console.log('Starting routine generation...')
-    console.log('All sections:', allSections.length)
-    console.log('Selected courses:', selectedCourses)
-    console.log('Time range:', startTime, '-', endTime)
-    console.log('Selected days:', selectedDays)
-
     setIsGenerating(true)
     setGeneratedRoutines([])
-  // reset previous summary
-  setGenerationSummary(null)
+    // reset previous summary
+    setGenerationSummary(null)
 
     // Use setTimeout to allow UI to update
     setTimeout(() => {
@@ -243,10 +237,6 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
           }
         })
 
-        console.log('Sections by course after filtering:', Object.fromEntries(sectionsByCourse))
-        console.log('Number of courses with available sections:', sectionsByCourse.size)
-        console.log('Number of selected courses:', selectedCourses.length)
-
         // Check if we have sections for all selected courses
         const missingCourses = selectedCourses.filter(courseName => {
           const normalizedName = normalizeName(courseName)
@@ -254,7 +244,6 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
         })
 
         if (missingCourses.length > 0) {
-          console.log('Missing sections for courses:', missingCourses)
           // report summary
           setGenerationSummary({
             totalPossible: 0,
@@ -281,8 +270,6 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
           const sections = sectionsByCourse.get(courseName) || []
           return total * Math.max(sections.length, 1)
         }, 1)
-
-        console.log('Estimated total possible combinations:', totalPossible)
 
         // Report preliminary summary (before generation)
         setGenerationSummary({
@@ -354,8 +341,6 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
 
         generateCombinations(0, [])
 
-        console.log('Total complete combinations generated:', combinations.length)
-
         // Convert to Routine format - only complete routines
         let routines: Routine[] = combinations
           .filter(sections => sections.length === courseNames.length) // Must include ALL courses
@@ -370,7 +355,6 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
           routines = routines.slice(0, 20)
         }
 
-        console.log('Final complete routines:', routines.length, isLimited ? '(showing first 20 of many)' : '(showing all)')
         // Update summary with final counts
         setGenerationSummary({
           totalPossible,

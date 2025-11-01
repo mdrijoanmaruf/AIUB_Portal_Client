@@ -20,7 +20,6 @@ export const clearCourseCache = () => {
     localStorage.removeItem(CACHE_KEYS.ALL_SECTIONS_TIMESTAMP)
     localStorage.removeItem(CACHE_KEYS.COURSE_NAMES)
     localStorage.removeItem(CACHE_KEYS.COURSE_NAMES_TIMESTAMP)
-    console.log('Course cache cleared')
   } catch (error) {
     console.error('Error clearing course cache:', error)
   }

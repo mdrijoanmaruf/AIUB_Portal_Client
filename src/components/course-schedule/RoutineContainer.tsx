@@ -148,8 +148,6 @@ const RoutineContainer: React.FC = () => {
           try {
             const parsedCache = JSON.parse(cachedData)
             if (Array.isArray(parsedCache) && parsedCache.length > 0) {
-              console.log('Using cached course sections data')
-              
               // Normalize course name helper
               const normalizeName = (name: string) => 
                 name.replace(/\s*\[[A-Z0-9]\]\s*$/i, '').trim().toUpperCase()
@@ -165,7 +163,6 @@ const RoutineContainer: React.FC = () => {
                 })
               })
               
-              console.log(`Found ${filteredSections.length} sections from cache for ${courseNames.length} selected courses`)
               setCourseSections(filteredSections)
               setIsLoading(false)
               return
@@ -177,7 +174,6 @@ const RoutineContainer: React.FC = () => {
       }
 
       // Fetch from server if no valid cache
-      console.log('Fetching fresh course sections from server')
       const response = await fetch('https://aiub-course-kappa.vercel.app/api/courses')
       const result = await response.json()
       
@@ -205,7 +201,6 @@ const RoutineContainer: React.FC = () => {
           })
         })
         
-        console.log(`Found ${filteredSections.length} sections for ${courseNames.length} selected courses`)
         setCourseSections(filteredSections)
       } else {
         setCourseSections([])

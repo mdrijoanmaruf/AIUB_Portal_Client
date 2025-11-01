@@ -123,37 +123,25 @@ const Registration = () => {
       const cachedRegistrationData = cacheManager.getCache('registrationData')
       
       if (cachedRegistrationData && cachedRegistrationData.studentInfo) {
-        console.log('Using cached registration data')
         setRegistrationData(cachedRegistrationData)
         setLoading(false)
         return
       }
 
       // Fetch fresh data if no valid cache
-      console.log('Fetching fresh registration data from server')
       const response = await fetch(`${API_BASE}/registration/data`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
       
-      console.log('Response status:', response.status)
-      console.log('Response ok:', response.ok)
-      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       
       const result = await response.json()
-      console.log('Registration API response:', result)
 
       if (result.success && result.data) {
-        console.log('Registration data received:', {
-          studentName: result.data.studentInfo?.name,
-          coursesCount: result.data.courses?.length,
-          semestersCount: result.data.semesters?.length
-        })
-        
         setRegistrationData(result.data)
 
         // Cache the registration data with 5-minute expiry
@@ -161,7 +149,6 @@ const Registration = () => {
           cacheManager.setCache('registrationData', result.data, {
             maxAge: 5 * 60 * 1000, // 5 minutes
             onExpiry: () => {
-              console.log('Registration data cache expired - logging out')
               cacheManager.autoLogout()
             }
           })

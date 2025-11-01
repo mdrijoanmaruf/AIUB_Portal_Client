@@ -118,14 +118,9 @@ export default function GradeReportPage() {
 
       // Check cache first (unless force refresh)
       if (!forceRefresh) {
-        console.log('🔍 Checking cache for grade report data...')
-        
         // First check cacheManager (with 5-minute expiry)
         const cachedData = cacheManager.getCache('gradeReportData')
         if (cachedData && cachedData.byCurriculum && cachedData.bySemester) {
-          console.log('📊 ✅ Using cached grade report data from cacheManager')
-          console.log('   - Curriculum semesters:', cachedData.byCurriculum?.semesters?.length || 0)
-          console.log('   - Semester data semesters:', cachedData.bySemester?.semesters?.length || 0)
           setCurriculumData(cachedData.byCurriculum)
           setSemesterData(cachedData.bySemester)
           setLoading(false)
@@ -135,9 +130,6 @@ export default function GradeReportPage() {
         // Fallback to localStorage prefetch cache
         const prefetchedData = getCachedGradeReport()
         if (prefetchedData && prefetchedData.byCurriculum && prefetchedData.bySemester) {
-          console.log('📊 ✅ Using prefetched grade report data from localStorage')
-          console.log('   - Curriculum semesters:', prefetchedData.byCurriculum?.semesters?.length || 0)
-          console.log('   - Semester data semesters:', prefetchedData.bySemester?.semesters?.length || 0)
           setCurriculumData(prefetchedData.byCurriculum)
           setSemesterData(prefetchedData.bySemester)
           
@@ -145,7 +137,6 @@ export default function GradeReportPage() {
           cacheManager.setCache('gradeReportData', prefetchedData, {
             maxAge: 5 * 60 * 1000,
             onExpiry: () => {
-              console.log('Grade report cache expired - auto logout')
               cacheManager.autoLogout()
             }
           })
@@ -153,13 +144,7 @@ export default function GradeReportPage() {
           setLoading(false)
           return
         }
-        
-        console.log('📊 ⚠️ No cached data found, fetching from API...')
-      } else {
-        console.log('📊 🔄 Force refresh requested, bypassing cache...')
       }
-
-      console.log('📊 Fetching fresh grade report data from API')
 
       // Get auth token
       const authToken = localStorage.getItem('authToken')
@@ -180,17 +165,10 @@ export default function GradeReportPage() {
       const result = await response.json()
 
       if (result.success) {
-        console.log('📊 Grade Reports Received:')
-        console.log('By Curriculum:', result.data.byCurriculum)
-        console.log('By Semester:', result.data.bySemester)
-        console.log('Curriculum Semesters:', result.data.byCurriculum?.semesters?.length || 0)
-        console.log('Semester Semesters:', result.data.bySemester?.semesters?.length || 0)
-        
         // Cache with cacheManager with 5-minute expiry and auto-logout
         cacheManager.setCache('gradeReportData', result.data, {
           maxAge: 5 * 60 * 1000, // 5 minutes
           onExpiry: () => {
-            console.log('Grade report data cache expired - logging out')
             cacheManager.autoLogout()
           }
         })
@@ -234,15 +212,10 @@ export default function GradeReportPage() {
   const prepareGraphData = () => {
     if (!semesterData?.semesters) return null
 
-    console.log('🔍 Preparing graph data...')
-    console.log('Semester Data:', semesterData)
-
     // Filter only semesters with valid data
     const validSemesters = semesterData.semesters.filter(sem => 
       sem.courses && sem.courses.length > 0
     )
-
-    console.log('Valid Semesters:', validSemesters.length)
 
     // GPA trend data - calculate semester-wise CGPA from course data
     // Note: some backends provide `gradePoint` as per-credit (<=4.00) or as total points for the course (>4.00).
@@ -280,8 +253,6 @@ export default function GradeReportPage() {
 
       const semesterCgpa = totalCredits > 0 ? totalGradePoints / totalCredits : 0
 
-      console.log(`Semester ${sem.title}: Total Grade Points=${totalGradePoints.toFixed(2)}, Total Credits=${totalCredits}, CGPA=${semesterCgpa.toFixed(2)} (Grade Points / Credits)`)
-
       return {
         // short label for x-axis
         semester: sem.title.replace(/\*+\s*/, '').substring(0, 15),
@@ -291,8 +262,6 @@ export default function GradeReportPage() {
         index: index + 1
       }
     })
-
-    console.log('GPA Data:', gpaData)
 
     // Grade distribution - count all grade types dynamically
     const gradeDistribution: Record<string, number> = {}
@@ -304,8 +273,6 @@ export default function GradeReportPage() {
         }
       })
     })
-
-    console.log('Grade Distribution:', gradeDistribution)
 
     // Define color mapping for all grades
     const gradeColors: Record<string, string> = {
@@ -354,16 +321,12 @@ export default function GradeReportPage() {
         }, 0)
       }
       
-      console.log(`Semester ${sem.title}: Credits=${credits}`)
-      
       return {
         semester: sem.title.replace(/\*+\s*/, '').substring(0, 15),
         credits,
         index: index + 1
       }
     })
-
-    console.log('Credits Data:', creditsData)
 
     // Courses per semester
     const coursesData = validSemesters.map((sem, index) => ({
@@ -378,7 +341,6 @@ export default function GradeReportPage() {
       .filter(sem => sem.gpa && parseFloat(sem.gpa) > 0)
       .map((sem, index) => {
         const gpaValue = parseFloat(sem.gpa || '0')
-        console.log(`GPA Comparison - ${sem.title}: ${gpaValue}`)
         return {
           semester: sem.title.replace(/\*+\s*/, '').substring(0, 15),
           gpa: gpaValue,
@@ -386,8 +348,6 @@ export default function GradeReportPage() {
           index: index + 1
         }
       })
-
-    console.log('GPA Comparison Data:', gpaComparison)
 
     // Performance metrics
     const totalCourses = validSemesters.reduce((sum, sem) => sum + sem.courses.length, 0)
@@ -419,8 +379,6 @@ export default function GradeReportPage() {
       }
     })
 
-    console.log('Grade Trend Data:', gradeTrend)
-
     const result = {
       gpaData,
       gradeDistData,
@@ -439,7 +397,6 @@ export default function GradeReportPage() {
       }
     }
 
-    console.log('Final Graph Data:', result)
     return result
   }
 

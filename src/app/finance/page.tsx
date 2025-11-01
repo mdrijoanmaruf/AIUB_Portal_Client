@@ -66,14 +66,12 @@ const Finance = () => {
       const cachedFinanceData = cacheManager.getCache('financeData')
       
       if (cachedFinanceData && cachedFinanceData.transactions) {
-        console.log('Using cached finance data')
         setFinanceData(cachedFinanceData)
         setLoading(false)
         return
       }
 
       // Fetch fresh data if no valid cache
-      console.log('Fetching fresh finance data from server')
       const response = await fetch(`${API_BASE}/finance/data`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -89,7 +87,6 @@ const Finance = () => {
           cacheManager.setCache('financeData', result.data, {
             maxAge: 5 * 60 * 1000, // 5 minutes
             onExpiry: () => {
-              console.log('Finance data cache expired - logging out')
               cacheManager.autoLogout()
             }
           })
