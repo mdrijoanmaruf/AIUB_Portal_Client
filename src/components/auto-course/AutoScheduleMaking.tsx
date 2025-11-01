@@ -98,89 +98,69 @@ const AutoScheduleMaking: React.FC<AutoScheduleMakingProps> = ({
 
   // Download routine as image
   const downloadRoutineImage = async (index: number) => {
-    const containerElement = document.getElementById(`routine-grid-${index}`)
-    if (!containerElement) return
+    const source = document.getElementById(`routine-grid-${index}`)
+    if (!source) return
 
     try {
-      // Add downloading state
-      containerElement.setAttribute('data-downloading', 'true')
-      
-      // Get all elements that need width adjustment
-      const daySlots = containerElement.querySelectorAll('.rbc-day-slot')
-      const headers = containerElement.querySelectorAll('.rbc-header')
-      const timeView = containerElement.querySelector('.rbc-time-view') as HTMLElement
-      const calendar = containerElement.querySelector('.rbc-calendar') as HTMLElement
-      
-      // Store original computed styles
-      const originalStyles = new Map<Element, Map<string, string>>()
-      
-      const storeAndUpdateStyles = (elements: NodeListOf<Element>, props: string[]) => {
+      // Create an offscreen (invisible) clone so the user doesn't see layout changes
+  const offscreenWrapper = document.createElement('div')
+  offscreenWrapper.id = 'offscreen-routine-wrapper'
+      offscreenWrapper.style.position = 'fixed'
+      offscreenWrapper.style.left = '0'
+      offscreenWrapper.style.top = '0'
+      offscreenWrapper.style.opacity = '0'
+      offscreenWrapper.style.pointerEvents = 'none'
+      offscreenWrapper.style.zIndex = '-1'
+      offscreenWrapper.style.background = '#ffffff'
+
+      const clone = source.cloneNode(true) as HTMLElement
+      // Enable download-specific compact layout only on the clone
+      clone.setAttribute('data-downloading', 'true')
+
+      offscreenWrapper.appendChild(clone)
+      document.body.appendChild(offscreenWrapper)
+
+      // Adjust widths inside the clone to ensure consistent export sizing
+      const daySlots = clone.querySelectorAll('.rbc-day-slot')
+      const headers = clone.querySelectorAll('.rbc-header')
+      const timeView = clone.querySelector('.rbc-time-view') as HTMLElement
+      const calendar = clone.querySelector('.rbc-calendar') as HTMLElement
+
+      const forceSizes = (elements: NodeListOf<Element>) => {
         elements.forEach((el) => {
           const htmlEl = el as HTMLElement
-          const styleMap = new Map<string, string>()
-          
-          props.forEach(prop => {
-            styleMap.set(prop, htmlEl.style.getPropertyValue(prop))
-          })
-          
-          originalStyles.set(el, styleMap)
-          
-          // Remove !important overrides by clearing and re-setting
           htmlEl.style.setProperty('min-width', '300px', '')
           htmlEl.style.setProperty('width', '300px', '')
           htmlEl.style.setProperty('flex', '0 0 300px', '')
         })
       }
-      
-      storeAndUpdateStyles(daySlots, ['min-width', 'width', 'flex'])
-      storeAndUpdateStyles(headers, ['min-width', 'width', 'flex'])
-      
+
+      forceSizes(daySlots)
+      forceSizes(headers)
+
       if (timeView) {
         timeView.style.setProperty('width', 'max-content', '')
         timeView.style.setProperty('min-width', '100%', '')
       }
-      
       if (calendar) {
         calendar.style.setProperty('width', 'max-content', '')
       }
-      
-      containerElement.style.setProperty('overflow', 'visible', '')
-      containerElement.style.setProperty('width', 'max-content', '')
-      
-      // Wait for layout
-      await new Promise(resolve => setTimeout(resolve, 300))
-      
-      const dataUrl = await toPng(containerElement, {
+
+      clone.style.setProperty('overflow', 'visible', '')
+      clone.style.setProperty('width', 'max-content', '')
+
+      // Allow layout to settle
+      await new Promise(resolve => setTimeout(resolve, 150))
+
+      const dataUrl = await toPng(clone, {
         quality: 1.0,
         backgroundColor: '#ffffff',
         pixelRatio: 2,
         cacheBust: true,
       })
 
-      // Restore original styles
-      originalStyles.forEach((styleMap, el) => {
-        const htmlEl = el as HTMLElement
-        styleMap.forEach((value, prop) => {
-          if (value) {
-            htmlEl.style.setProperty(prop, value)
-          } else {
-            htmlEl.style.removeProperty(prop)
-          }
-        })
-      })
-      
-      if (timeView) {
-        timeView.style.removeProperty('width')
-        timeView.style.removeProperty('min-width')
-      }
-      
-      if (calendar) {
-        calendar.style.removeProperty('width')
-      }
-      
-      containerElement.style.removeProperty('overflow')
-      containerElement.style.removeProperty('width')
-      containerElement.removeAttribute('data-downloading')
+      // Cleanup offscreen clone
+      document.body.removeChild(offscreenWrapper)
 
       const link = document.createElement('a')
       link.download = `routine-option-${index + 1}.png`
@@ -188,7 +168,9 @@ const AutoScheduleMaking: React.FC<AutoScheduleMakingProps> = ({
       link.click()
     } catch (error) {
       console.error('Error downloading routine:', error)
-      containerElement.removeAttribute('data-downloading')
+      // Ensure cleanup if something failed
+      const existingWrapper = document.querySelector('#offscreen-routine-wrapper')
+      if (existingWrapper) existingWrapper.parentElement?.removeChild(existingWrapper)
     }
   }
 
