@@ -441,10 +441,10 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
 
     return (
       <div className="flex flex-col items-center justify-center h-full text-center space-y-0.5 sm:space-y-1 leading-tight p-1">
-        <div className="font-bold text-sm sm:text-base md:text-lg leading-tight" style={{ color: colors.titleColor }}>
+        <div className="font-bold text-sm sm:text-xs md:text-xs lg:text-xs xl:text-xs leading-tight" style={{ color: colors.titleColor }}>
           {event.title}
         </div>
-        <div className="text-sm sm:text-base leading-tight" style={{ color: colors.sectionColor }}>
+        <div className="text-sm sm:text-xs md:text-xs lg:text-xs xl:text-xs leading-tight" style={{ color: colors.sectionColor }}>
           Sec: {event.resource.section.split(', ').map((section: string, idx: number) => {
             const [sectionName, ...rest] = section.split(' ');
             const restText = rest.join(' ');
@@ -456,10 +456,10 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
             );
           })}
         </div>
-        <div className="text-xs sm:text-sm leading-tight" style={{ color: colors.classColor, opacity: 0.95 }}>
+        <div className="text-xs sm:text-xs md:text-xs lg:text-xs xl:text-xs leading-tight" style={{ color: colors.classColor, opacity: 0.95 }}>
           {event.start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - {event.end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
         </div>
-        <div className="text-xs sm:text-sm leading-tight" style={{ color: colors.classColor, opacity: 0.95 }}>
+        <div className="text-xs sm:text-xs md:text-xs lg:text-xs xl:text-xs leading-tight" style={{ color: colors.classColor, opacity: 0.95 }}>
           {event.resource.className}
         </div>
       </div>
@@ -492,7 +492,7 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
   })
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
+    <div className="border border-gray-200 rounded-lg overflow-hidden w-full">
       <div className="bg-gray-50 p-3 sm:p-4 border-b border-gray-200">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex-1">
@@ -524,7 +524,7 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
       {/* Timetable Grid */}
       <div
         id={`routine-${index}`}
-        className="p-3 sm:p-4 md:p-6 bg-white"
+        className="p-3 sm:p-4 md:p-6 bg-white w-full overflow-x-auto"
       >
         <div className="mb-3 sm:mb-4">
           <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-1">Weekly Schedule</h4>
@@ -551,18 +551,18 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
               scrollbar-width: none;
             }
 
-            /* Force horizontal scroll with fixed day widths */
+            /* Mobile view - Horizontal scroll */
             #routine-grid-${index} .rbc-calendar {
+              width: 100%;
               min-width: 100%;
-              width: max-content;
             }
 
             #routine-grid-${index} .rbc-time-view {
+              width: 100%;
               min-width: 100%;
-              width: max-content;
             }
 
-            /* Make each day column take more width for better readability */
+            /* Mobile view - Make each day column take more width for scrolling */
             #routine-grid-${index} .rbc-day-slot {
               min-width: 50vw !important;
               width: 50vw !important;
@@ -610,31 +610,79 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
               gap: 0 !important;
             }
 
+            /* Download mode: Compact sizing */
+            #routine-grid-${index}[data-downloading="true"] .rbc-event {
+              padding: 2px 4px !important;
+              font-size: 0.6rem !important;
+            }
+
+            #routine-grid-${index}[data-downloading="true"] .rbc-calendar {
+              font-size: 0.6rem !important;
+            }
+
+            #routine-grid-${index}[data-downloading="true"] .rbc-header {
+              padding: 4px 3px !important;
+              font-size: 0.65rem !important;
+            }
+
+            #routine-grid-${index}[data-downloading="true"] .rbc-label {
+              font-size: 0.6rem !important;
+              padding: 2px 3px !important;
+            }
+
+            #routine-grid-${index}[data-downloading="true"] .rbc-timeslot-group {
+              min-height: 40px !important;
+            }
+
             @media (min-width: 640px) {
+              #routine-grid-${index} .rbc-calendar {
+                width: 100%;
+                min-width: 100%;
+              }
+
+              #routine-grid-${index} .rbc-time-view {
+                width: 100%;
+                min-width: 100%;
+              }
+
               #routine-grid-${index} .rbc-day-slot {
-                min-width: 35vw !important;
-                width: 35vw !important;
-                flex: 0 0 35vw !important;
+                min-width: calc((100% - 70px) / ${activeDayIndices.length || 6}) !important;
+                width: calc((100% - 70px) / ${activeDayIndices.length || 6}) !important;
+                flex: 0 0 calc((100% - 70px) / ${activeDayIndices.length || 6}) !important;
               }
 
               #routine-grid-${index} .rbc-header {
-                min-width: 35vw !important;
-                width: 35vw !important;
-                flex: 0 0 35vw !important;
+                min-width: calc((100% - 70px) / ${activeDayIndices.length || 6}) !important;
+                width: calc((100% - 70px) / ${activeDayIndices.length || 6}) !important;
+                flex: 0 0 calc((100% - 70px) / ${activeDayIndices.length || 6}) !important;
               }
             }
 
             @media (min-width: 1024px) {
               #routine-grid-${index} .rbc-day-slot {
-                min-width: 28vw !important;
-                width: 28vw !important;
-                flex: 0 0 28vw !important;
+                min-width: calc((100% - 70px) / ${activeDayIndices.length || 6}) !important;
+                width: calc((100% - 70px) / ${activeDayIndices.length || 6}) !important;
+                flex: 0 0 calc((100% - 70px) / ${activeDayIndices.length || 6}) !important;
               }
 
               #routine-grid-${index} .rbc-header {
-                min-width: 28vw !important;
-                width: 28vw !important;
-                flex: 0 0 28vw !important;
+                min-width: calc((100% - 70px) / ${activeDayIndices.length || 6}) !important;
+                width: calc((100% - 70px) / ${activeDayIndices.length || 6}) !important;
+                flex: 0 0 calc((100% - 70px) / ${activeDayIndices.length || 6}) !important;
+              }
+            }
+
+            @media (min-width: 1280px) {
+              #routine-grid-${index} .rbc-day-slot {
+                min-width: calc((100% - 70px) / ${activeDayIndices.length || 6}) !important;
+                width: calc((100% - 70px) / ${activeDayIndices.length || 6}) !important;
+                flex: 0 0 calc((100% - 70px) / ${activeDayIndices.length || 6}) !important;
+              }
+
+              #routine-grid-${index} .rbc-header {
+                min-width: calc((100% - 70px) / ${activeDayIndices.length || 6}) !important;
+                width: calc((100% - 70px) / ${activeDayIndices.length || 6}) !important;
+                flex: 0 0 calc((100% - 70px) / ${activeDayIndices.length || 6}) !important;
               }
             }
 
@@ -664,13 +712,19 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
             
             @media (min-width: 640px) {
               #routine-grid-${index} .rbc-calendar {
-                font-size: 0.875rem;
+                font-size: 0.7rem;
               }
             }
 
             @media (min-width: 1024px) {
               #routine-grid-${index} .rbc-calendar {
-                font-size: 1rem;
+                font-size: 0.65rem;
+              }
+            }
+
+            @media (min-width: 1280px) {
+              #routine-grid-${index} .rbc-calendar {
+                font-size: 0.6rem;
               }
             }
 
@@ -681,15 +735,22 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
 
             @media (min-width: 640px) {
               #routine-grid-${index} .rbc-event {
-                padding: 8px 10px;
-                font-size: 0.75rem;
+                padding: 4px 6px;
+                font-size: 0.65rem;
               }
             }
 
             @media (min-width: 1024px) {
               #routine-grid-${index} .rbc-event {
-                padding: 10px 12px;
-                font-size: 0.875rem;
+                padding: 3px 5px;
+                font-size: 0.6rem;
+              }
+            }
+
+            @media (min-width: 1280px) {
+              #routine-grid-${index} .rbc-event {
+                padding: 2px 4px;
+                font-size: 0.55rem;
               }
             }
 
@@ -703,15 +764,22 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
 
             @media (min-width: 640px) {
               #routine-grid-${index} .rbc-header {
-                padding: 10px 8px;
-                font-size: 0.875rem;
+                padding: 6px 4px;
+                font-size: 0.7rem;
               }
             }
 
             @media (min-width: 1024px) {
               #routine-grid-${index} .rbc-header {
-                padding: 12px 10px;
-                font-size: 1rem;
+                padding: 4px 3px;
+                font-size: 0.65rem;
+              }
+            }
+
+            @media (min-width: 1280px) {
+              #routine-grid-${index} .rbc-header {
+                padding: 3px 2px;
+                font-size: 0.6rem;
               }
             }
 
@@ -724,8 +792,8 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
 
             @media (min-width: 640px) {
               #routine-grid-${index} .rbc-label {
-                font-size: 0.75rem;
-                padding: 4px 8px;
+                font-size: 0.65rem;
+                padding: 2px 4px;
                 text-align: center !important;
                 width: 100% !important;
               }
@@ -733,8 +801,17 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
 
             @media (min-width: 1024px) {
               #routine-grid-${index} .rbc-label {
-                font-size: 0.875rem;
-                padding: 6px 10px;
+                font-size: 0.6rem;
+                padding: 2px 3px;
+                text-align: center !important;
+                width: 100% !important;
+              }
+            }
+
+            @media (min-width: 1280px) {
+              #routine-grid-${index} .rbc-label {
+                font-size: 0.55rem;
+                padding: 1px 2px;
                 text-align: center !important;
                 width: 100% !important;
               }
