@@ -534,24 +534,40 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
           </p>
         </div>
 
-        <div 
-          id={`routine-grid-${index}`}
-          className="relative routine-calendar-container overflow-x-auto scrollbar-hide"
-          style={{ height: 'auto', minHeight: '500px' }}
-          data-active-days={activeDayIndices.join(',')}
-        >
-          <style>{`
-            /* Hide scrollbar but keep functionality */
-            #routine-grid-${index}::-webkit-scrollbar {
-              display: none;
-            }
-            
-            #routine-grid-${index} {
-              -ms-overflow-style: none;
-              scrollbar-width: none;
-            }
+          <div 
+            id={`routine-grid-${index}`}
+            className="relative routine-calendar-container overflow-x-auto scrollbar-hide"
+            style={{ height: 'auto', minHeight: '500px' }}
+            data-active-days={activeDayIndices.join(',')}
+          >
+            <style>{`
+              /* Hide scrollbar but keep functionality */
+              #routine-grid-${index} {
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+              }
 
-            /* Mobile view - Horizontal scroll */
+              #routine-grid-${index}::-webkit-scrollbar {
+                display: none;
+              }
+
+              #routine-grid-${index} .rbc-time-header {
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+              }
+
+              #routine-grid-${index} .rbc-time-header::-webkit-scrollbar {
+                display: none;
+              }
+
+              #routine-grid-${index} .rbc-time-content {
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+              }
+
+              #routine-grid-${index} .rbc-time-content::-webkit-scrollbar {
+                display: none;
+              }            /* Mobile view - Horizontal scroll */
             #routine-grid-${index} .rbc-calendar {
               width: 100%;
               min-width: 100%;
@@ -686,23 +702,83 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
               }
             }
 
-            /* Adjust time gutter to be fixed */
+            /* Container scrolls both directions */
+            #routine-grid-${index} {
+              display: flex;
+              flex-direction: column;
+            }
+
+            /* Make calendar time view scrollable */
+            #routine-grid-${index} .rbc-calendar {
+              display: flex;
+              flex-direction: column;
+              height: 100%;
+              overflow: hidden !important;
+            }
+
+            #routine-grid-${index} .rbc-time-view {
+              display: flex;
+              flex-direction: column;
+              flex: 1;
+              overflow: hidden !important;
+            }
+
+            /* Header section - scrolls with content */
+            #routine-grid-${index} .rbc-time-header {
+              position: relative !important;
+              overflow-x: auto !important;
+              overflow-y: hidden !important;
+              min-height: auto;
+              border: none !important;
+            }
+
+            #routine-grid-${index} .rbc-time-header-content {
+              position: relative !important;
+              overflow: visible !important;
+              display: flex;
+              min-width: max-content;
+            }
+
+            /* Content section - scrolls both ways */
+            #routine-grid-${index} .rbc-time-content {
+              position: relative !important;
+              overflow: auto !important;
+              flex: 1;
+              border: none !important;
+            }
+
+            /* Time gutter and header gutter - no sticky, scroll with content */
             #routine-grid-${index} .rbc-time-header-gutter,
             #routine-grid-${index} .rbc-time-gutter {
-              position: sticky;
-              left: 0;
-              z-index: 10;
+              position: relative !important;
+              left: auto !important;
+              top: auto !important;
+              z-index: auto !important;
               background: white;
-              min-width: 60px;
-              width: 60px;
+              min-width: 60px !important;
+              width: 60px !important;
+              flex-shrink: 0 !important;
+              border: none !important;
             }
 
             @media (min-width: 640px) {
               #routine-grid-${index} .rbc-time-header-gutter,
               #routine-grid-${index} .rbc-time-gutter {
-                min-width: 70px;
-                width: 70px;
+                min-width: 70px !important;
+                width: 70px !important;
               }
+            }
+
+            /* Day headers - scroll with content */
+            #routine-grid-${index} .rbc-header {
+              padding: 8px 6px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              background: #f9fafb;
+              border-bottom: 2px solid #e5e7eb !important;
+              position: relative !important;
+              overflow: visible !important;
+              border: none !important;
             }
 
             /* Responsive font sizes */
@@ -752,14 +828,6 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
                 padding: 2px 4px;
                 font-size: 0.55rem;
               }
-            }
-
-            #routine-grid-${index} .rbc-header {
-              padding: 8px 6px;
-              font-size: 0.75rem;
-              font-weight: 600;
-              background: #f9fafb;
-              border-bottom: 2px solid #e5e7eb !important;
             }
 
             @media (min-width: 640px) {
@@ -884,12 +952,21 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
               border: none !important;
             }
 
+            /* Time header scrolls with content - not fixed */
             #routine-grid-${index} .rbc-time-header {
+              position: relative;
+              overflow: visible;
               border: none !important;
+            }
+
+            #routine-grid-${index} .rbc-time-header-content {
+              position: relative;
+              overflow: visible;
             }
 
             #routine-grid-${index} .rbc-day-slot {
               border: none !important;
+              min-width: 100%;
             }
           `}</style>
           <Calendar
