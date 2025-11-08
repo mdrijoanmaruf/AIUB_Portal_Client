@@ -501,13 +501,7 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
             </p>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap w-full sm:w-auto">
-            <button
-              onClick={() => onDownload(index)}
-              className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-xs sm:text-sm font-medium transition-colors"
-            >
-              <FiDownload className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span>Download</span>
-            </button>
+            {/* Download button hidden - handled by parent container */}
           </div>
         </div>
       </div>
