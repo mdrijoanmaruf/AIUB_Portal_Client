@@ -268,11 +268,20 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
           const selStart = timeToMinutes(timeSlot['Start Time'])
           const selEnd = timeToMinutes(timeSlot['End Time'])
 
-          return sec.Time.some((t: any) => {
-            if (normalizeDay(t.Day) !== dayNorm) return false
-            const sStart = timeToMinutes(t['Start Time'])
-            const sEnd = timeToMinutes(t['End Time'])
-            return sStart < selEnd && sEnd > selStart
+          // Check if ALL time slots match exactly (same day, same start, same end)
+          if (sec.Time.length !== section.Time.length) return false
+
+          // Create a set of time slot signatures for the current section
+          const sectionTimeSlots = new Set(
+            section.Time.map(t => 
+              `${normalizeDay(t.Day)}|${timeToMinutes(t['Start Time'])}|${timeToMinutes(t['End Time'])}`
+            )
+          )
+
+          // Check if all time slots in sec match the section's time slots
+          return sec.Time.every((t: any) => {
+            const timeSlotKey = `${normalizeDay(t.Day)}|${timeToMinutes(t['Start Time'])}|${timeToMinutes(t['End Time'])}`
+            return sectionTimeSlots.has(timeSlotKey)
           })
         })
 
