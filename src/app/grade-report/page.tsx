@@ -133,9 +133,9 @@ export default function GradeReportPage() {
           setCurriculumData(prefetchedData.byCurriculum)
           setSemesterData(prefetchedData.bySemester)
           
-          // Store in cacheManager for 5-minute expiry
+          // Store in cacheManager for 20-minute expiry
           cacheManager.setCache('gradeReportData', prefetchedData, {
-            maxAge: 5 * 60 * 1000,
+            maxAge: 20 * 60 * 1000,
             onExpiry: () => {
               cacheManager.autoLogout()
             }
@@ -165,9 +165,9 @@ export default function GradeReportPage() {
       const result = await response.json()
 
       if (result.success) {
-        // Cache with cacheManager with 5-minute expiry and auto-logout
+        // Cache with cacheManager with 20-minute expiry and auto-logout
         cacheManager.setCache('gradeReportData', result.data, {
-          maxAge: 5 * 60 * 1000, // 5 minutes
+          maxAge: 20 * 60 * 1000, // 20 minutes
           onExpiry: () => {
             cacheManager.autoLogout()
           }

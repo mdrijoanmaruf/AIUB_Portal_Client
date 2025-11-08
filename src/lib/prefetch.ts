@@ -6,7 +6,7 @@
 import { cacheManager } from './cacheManager'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'
-const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+const CACHE_DURATION = 20 * 60 * 1000 // 20 minutes
 
 interface PrefetchResult {
   success: boolean
@@ -143,6 +143,92 @@ async function prefetchCourseNames(): Promise<boolean> {
 }
 
 /**
+ * Prefetch registration data
+ */
+async function prefetchRegistration(authToken: string): Promise<boolean> {
+  try {
+    // Check if already cached in cacheManager
+    const cachedData = cacheManager.getCache('registrationData')
+    if (cachedData && cachedData.semesters && cachedData.courses) {
+      return true
+    }
+
+    const response = await fetch(`${API_BASE}/registration/data`, {
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch registration: ${response.status}`)
+    }
+
+    const result = await response.json()
+
+    if (result.success && result.data) {
+      // Store in cacheManager (primary)
+      cacheManager.setCache('registrationData', result.data, {
+        maxAge: CACHE_DURATION
+      })
+
+      // Also store in localStorage as backup
+      localStorage.setItem('registrationData', JSON.stringify(result.data))
+      localStorage.setItem('registrationDataTimestamp', Date.now().toString())
+      
+      return true
+    }
+
+    return false
+  } catch (error) {
+    console.error('❌ Failed to prefetch registration:', error)
+    return false
+  }
+}
+
+/**
+ * Prefetch finance data
+ */
+async function prefetchFinance(authToken: string): Promise<boolean> {
+  try {
+    // Check if already cached in cacheManager
+    const cachedData = cacheManager.getCache('financeData')
+    if (cachedData) {
+      return true
+    }
+
+    const response = await fetch(`${API_BASE}/finance/data`, {
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch finance: ${response.status}`)
+    }
+
+    const result = await response.json()
+
+    if (result.success && result.data) {
+      // Store in cacheManager (primary)
+      cacheManager.setCache('financeData', result.data, {
+        maxAge: CACHE_DURATION
+      })
+
+      // Also store in localStorage as backup
+      localStorage.setItem('financeData', JSON.stringify(result.data))
+      localStorage.setItem('financeDataTimestamp', Date.now().toString())
+      
+      return true
+    }
+
+    return false
+  } catch (error) {
+    console.error('❌ Failed to prefetch finance:', error)
+    return false
+  }
+}
+
+/**
  * Prefetch all course sections data
  */
 async function prefetchAllCourseSections(): Promise<boolean> {
@@ -196,17 +282,37 @@ export async function prefetchAllData(authToken: string): Promise<PrefetchResult
   // Run all prefetch operations in parallel for better performance
   const results = await Promise.allSettled([
     prefetchGradeReport(authToken),
+    prefetchRegistration(authToken),
+    prefetchFinance(authToken),
     prefetchCourseNames(),
     prefetchAllCourseSections()
   ])
 
   // Process results
-  const [gradeReportResult, courseNamesResult, courseSectionsResult] = results
+  const [
+    gradeReportResult, 
+    registrationResult, 
+    financeResult, 
+    courseNamesResult, 
+    courseSectionsResult
+  ] = results
 
   if (gradeReportResult.status === 'fulfilled' && gradeReportResult.value) {
     cached.push('Grade Report')
   } else {
     failed.push('Grade Report')
+  }
+
+  if (registrationResult.status === 'fulfilled' && registrationResult.value) {
+    cached.push('Registration')
+  } else {
+    failed.push('Registration')
+  }
+
+  if (financeResult.status === 'fulfilled' && financeResult.value) {
+    cached.push('Finance')
+  } else {
+    failed.push('Finance')
   }
 
   if (courseNamesResult.status === 'fulfilled' && courseNamesResult.value) {
@@ -220,6 +326,9 @@ export async function prefetchAllData(authToken: string): Promise<PrefetchResult
   } else {
     failed.push('Course Sections')
   }
+
+  const duration = Date.now() - startTime
+  console.log(`✅ Prefetch completed in ${duration}ms - Cached: ${cached.length}, Failed: ${failed.length}`)
 
   const result = {
     success: failed.length === 0,
@@ -297,6 +406,78 @@ export function getCachedCourseSections() {
     const age = Date.now() - parseInt(cacheTimestamp)
     if (age < CACHE_DURATION) {
       return JSON.parse(cachedData)
+    }
+  }
+  
+  return null
+}
+
+/**
+ * Get cached registration data
+ */
+export function getCachedRegistration() {
+  // First try cacheManager
+  const cachedData = cacheManager.getCache('registrationData')
+  if (cachedData) {
+    return cachedData
+  }
+
+  // Fallback to localStorage
+  const localCachedData = localStorage.getItem('registrationData')
+  const cacheTimestamp = localStorage.getItem('registrationDataTimestamp')
+  
+  if (localCachedData && cacheTimestamp) {
+    const age = Date.now() - parseInt(cacheTimestamp)
+    if (age < CACHE_DURATION) {
+      try {
+        const data = JSON.parse(localCachedData)
+        if (data) {
+          // Migrate to cacheManager for next time
+          cacheManager.setCache('registrationData', data, {
+            maxAge: CACHE_DURATION - age
+          })
+          return data
+        }
+      } catch (e) {
+        console.error('Failed to parse cached registration:', e)
+        return null
+      }
+    }
+  }
+  
+  return null
+}
+
+/**
+ * Get cached finance data
+ */
+export function getCachedFinance() {
+  // First try cacheManager
+  const cachedData = cacheManager.getCache('financeData')
+  if (cachedData) {
+    return cachedData
+  }
+
+  // Fallback to localStorage
+  const localCachedData = localStorage.getItem('financeData')
+  const cacheTimestamp = localStorage.getItem('financeDataTimestamp')
+  
+  if (localCachedData && cacheTimestamp) {
+    const age = Date.now() - parseInt(cacheTimestamp)
+    if (age < CACHE_DURATION) {
+      try {
+        const data = JSON.parse(localCachedData)
+        if (data) {
+          // Migrate to cacheManager for next time
+          cacheManager.setCache('financeData', data, {
+            maxAge: CACHE_DURATION - age
+          })
+          return data
+        }
+      } catch (e) {
+        console.error('Failed to parse cached finance:', e)
+        return null
+      }
     }
   }
   

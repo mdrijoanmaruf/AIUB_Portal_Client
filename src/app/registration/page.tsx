@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar/Navbar'
 import Loading from '../home/loading'
 import Footer from '@/components/Footer/Footer'
 import { cacheManager, initAutoLogout } from '@/lib/cacheManager'
+import { getCachedRegistration } from '@/lib/prefetch'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'
 
@@ -128,6 +129,14 @@ const Registration = () => {
         return
       }
 
+      // Try prefetched data from home page
+      const prefetchedData = getCachedRegistration()
+      if (prefetchedData && prefetchedData.studentInfo) {
+        setRegistrationData(prefetchedData)
+        setLoading(false)
+        return
+      }
+
       // Fetch fresh data if no valid cache
       const response = await fetch(`${API_BASE}/registration/data`, {
         headers: {
@@ -144,10 +153,10 @@ const Registration = () => {
       if (result.success && result.data) {
         setRegistrationData(result.data)
 
-        // Cache the registration data with 5-minute expiry
+        // Cache the registration data with 20-minute expiry
         try {
           cacheManager.setCache('registrationData', result.data, {
-            maxAge: 5 * 60 * 1000, // 5 minutes
+            maxAge: 20 * 60 * 1000, // 20 minutes
             onExpiry: () => {
               cacheManager.autoLogout()
             }

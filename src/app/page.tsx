@@ -3,14 +3,16 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { prefetchAllData } from '@/lib/prefetch'
+import PrefetchIndicator from '@/components/PrefetchIndicator'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'
 
 export default function Home() {
   const router = useRouter()
   const [formData, setFormData] = useState({
-    // username: '',
-    username: '23-53347-3',
+    username: '',
+    // username: '23-53347-3',
     password: '',
     captcha: '',
     captchaToken: '',
@@ -22,6 +24,8 @@ export default function Home() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [prefetchStatus, setPrefetchStatus] = useState<'loading' | 'success' | 'partial' | 'hidden'>('hidden')
+  const [prefetchData, setPrefetchData] = useState<{ cached: string[], failed: string[] }>({ cached: [], failed: [] })
 
   // Load captcha on component mount
   useEffect(() => {
@@ -84,14 +88,31 @@ export default function Home() {
       const result = await response.json()
 
       if (result.success) {
-        setSuccess('Login successful! Redirecting...')
+        setSuccess('Login successful! Preparing your data...')
         
         // Store JWT token and user data in localStorage
         if (result.data) {
           if (result.data.token) {
             localStorage.setItem('authToken', result.data.token)
+            
+            // Start prefetching all data immediately after login
+            setPrefetchStatus('loading')
+            prefetchAllData(result.data.token).then((prefetchResult) => {
+              if (prefetchResult.success) {
+                setPrefetchStatus('success')
+                setPrefetchData({ cached: prefetchResult.cached, failed: prefetchResult.failed })
+                console.log('✅ Prefetch completed:', prefetchResult)
+              } else {
+                setPrefetchStatus('partial')
+                setPrefetchData({ cached: prefetchResult.cached, failed: prefetchResult.failed })
+                console.warn('⚠️ Partial prefetch:', prefetchResult)
+              }
+            }).catch((error) => {
+              console.error('❌ Prefetch failed:', error)
+              setPrefetchStatus('partial')
+            })
           }
-          // Store user data with timestamp for caching
+          // Store user data with timestamp for caching (20 minutes)
           const { token, ...userDataWithoutToken } = result.data
           localStorage.setItem('userData', JSON.stringify(userDataWithoutToken))
           localStorage.setItem('userDataTimestamp', Date.now().toString())
@@ -99,7 +120,7 @@ export default function Home() {
         
         setTimeout(() => {
           router.push('/home')
-        }, 1000)
+        }, 2000) // Increased to 2 seconds to allow prefetch to start
       } else {
         throw new Error(result.message)
       }
@@ -330,6 +351,14 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Prefetch Indicator */}
+      <PrefetchIndicator
+        show={prefetchStatus !== 'hidden'}
+        status={prefetchStatus}
+        cached={prefetchData.cached}
+        failed={prefetchData.failed}
+      />
 
       {/* Custom Animations */}
       <style jsx>{`

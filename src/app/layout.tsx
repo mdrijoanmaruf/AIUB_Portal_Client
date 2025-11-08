@@ -165,7 +165,7 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="en" className="light" >
+    <html lang="en" className="light" suppressHydrationWarning>
       <head>
         <script
           type="application/ld+json"
@@ -176,6 +176,7 @@ export default function RootLayout({
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
         {children}
       </body>

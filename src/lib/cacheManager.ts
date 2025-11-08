@@ -1,17 +1,17 @@
 /**
  * Cache Management Utility
- * Handles automatic cache expiry and logout after 5 minutes
+ * Handles automatic cache expiry and logout after 20 minutes
  */
 
 export interface CacheConfig {
-  maxAge?: number; // Cache duration in milliseconds (default: 5 minutes)
+  maxAge?: number; // Cache duration in milliseconds (default: 20 minutes)
   onExpiry?: () => void; // Callback when cache expires
 }
 
 class CacheManager {
   private static instance: CacheManager;
   private timers: Map<string, NodeJS.Timeout> = new Map();
-  private readonly DEFAULT_MAX_AGE = 5 * 60 * 1000; // 5 minutes
+  private readonly DEFAULT_MAX_AGE = 20 * 60 * 1000; // 20 minutes
 
   private constructor() {}
 
@@ -113,11 +113,11 @@ class CacheManager {
         'userDataTimestamp',
         'authToken',
         'registrationData',
-        'registrationTimestamp',
+        'registrationDataTimestamp',
         'gradeReportData',
         'gradeReportTimestamp',
         'financeData',
-        'financeTimestamp',
+        'financeDataTimestamp',
         'allCourseSections',
         'allCourseSectionsTimestamp',
         'courseNames',
@@ -148,7 +148,7 @@ class CacheManager {
    * Initialize cache management for a page
    */
   initPageCache(router: any): void {
-    // Set up auto logout after 5 minutes
+    // Set up auto logout after 20 minutes
     const autoLogoutTimer = setTimeout(() => {
       this.autoLogout();
     }, this.DEFAULT_MAX_AGE);

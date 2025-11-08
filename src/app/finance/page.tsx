@@ -7,6 +7,7 @@ import Loading from '../home/loading'
 import Footer from '@/components/Footer/Footer'
 import { motion } from 'framer-motion'
 import { cacheManager, initAutoLogout } from '@/lib/cacheManager'
+import { getCachedFinance } from '@/lib/prefetch'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api'
 
@@ -71,6 +72,14 @@ const Finance = () => {
         return
       }
 
+      // Try prefetched data from home page
+      const prefetchedData = getCachedFinance()
+      if (prefetchedData && prefetchedData.transactions) {
+        setFinanceData(prefetchedData)
+        setLoading(false)
+        return
+      }
+
       // Fetch fresh data if no valid cache
       const response = await fetch(`${API_BASE}/finance/data`, {
         headers: {
@@ -82,10 +91,10 @@ const Finance = () => {
       if (result.success && result.data) {
         setFinanceData(result.data)
 
-        // Cache the finance data with 5-minute expiry
+        // Cache the finance data with 20-minute expiry
         try {
           cacheManager.setCache('financeData', result.data, {
-            maxAge: 5 * 60 * 1000, // 5 minutes
+            maxAge: 20 * 60 * 1000, // 20 minutes
             onExpiry: () => {
               cacheManager.autoLogout()
             }

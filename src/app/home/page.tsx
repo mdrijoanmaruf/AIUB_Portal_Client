@@ -226,10 +226,10 @@ const Home = () => {
       if (result.success && result.data) {
         setUserData(result.data)
         
-        // Cache the user data with 5-minute expiry
+        // Cache the user data with 20-minute expiry
         try {
           cacheManager.setCache('userData', result.data, {
-            maxAge: 5 * 60 * 1000, // 5 minutes
+            maxAge: 20 * 60 * 1000, // 20 minutes
             onExpiry: () => {
               cacheManager.autoLogout()
             }
