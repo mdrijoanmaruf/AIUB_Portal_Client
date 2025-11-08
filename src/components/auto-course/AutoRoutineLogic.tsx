@@ -237,10 +237,38 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
           }
         })
 
+        // NEW: Group sections by unique time slots to reduce combinations
+        const groupSectionsByTimeSlots = (sections: CourseSection[]): CourseSection[][] => {
+          const timeSlotGroups = new Map<string, CourseSection[]>()
+
+          sections.forEach(section => {
+            // Create a unique key based on time slots (day + start time + end time + class type)
+            const timeKey = section.Time
+              .map(t => `${t.Day}|${t['Start Time']}|${t['End Time']}|${t['Class Type']}`)
+              .sort()
+              .join('::')
+
+            if (!timeSlotGroups.has(timeKey)) {
+              timeSlotGroups.set(timeKey, [])
+            }
+            timeSlotGroups.get(timeKey)?.push(section)
+          })
+
+          // Return array of groups (each group has sections with same time slots)
+          return Array.from(timeSlotGroups.values())
+        }
+
+        // Group sections by time slots for each course
+        const uniqueTimeSlotsByCourse = new Map<string, CourseSection[][]>()
+        sectionsByCourse.forEach((sections, courseName) => {
+          const grouped = groupSectionsByTimeSlots(sections)
+          uniqueTimeSlotsByCourse.set(courseName, grouped)
+        })
+
         // Check if we have sections for all selected courses
         const missingCourses = selectedCourses.filter(courseName => {
           const normalizedName = normalizeName(courseName)
-          return !sectionsByCourse.has(normalizedName) || sectionsByCourse.get(normalizedName)!.length === 0
+          return !uniqueTimeSlotsByCourse.has(normalizedName) || uniqueTimeSlotsByCourse.get(normalizedName)!.length === 0
         })
 
         if (missingCourses.length > 0) {
@@ -261,14 +289,14 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
           return
         }
 
-        // Generate all possible combinations - ONLY complete routines
-        const courseNames = Array.from(sectionsByCourse.keys())
+        // Generate all possible combinations using UNIQUE TIME SLOTS
+        const courseNames = Array.from(uniqueTimeSlotsByCourse.keys())
         const combinations: CourseSection[][] = []
 
-        // Estimate total possible combinations
+        // Estimate total possible combinations based on unique time slots (much fewer!)
         const totalPossible = courseNames.reduce((total, courseName) => {
-          const sections = sectionsByCourse.get(courseName) || []
-          return total * Math.max(sections.length, 1)
+          const timeSlotGroups = uniqueTimeSlotsByCourse.get(courseName) || []
+          return total * Math.max(timeSlotGroups.length, 1)
         }, 1)
 
         // Report preliminary summary (before generation)
@@ -309,25 +337,30 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
             return
           }
 
-          const courseSections = sectionsByCourse.get(courseNames[index]) || []
+          // Get all time slot groups for this course
+          const timeSlotGroups = uniqueTimeSlotsByCourse.get(courseNames[index]) || []
 
-          // Must have sections available for this course
-          if (courseSections.length === 0) {
+          // Must have at least one time slot group available for this course
+          if (timeSlotGroups.length === 0) {
             return // Cannot proceed without sections for this course
           }
 
-          for (const section of courseSections) {
+          // Try each unique time slot group (not each individual section)
+          for (const sectionGroup of timeSlotGroups) {
+            // Pick the first section from the group as representative (all have same time slots)
+            const representativeSection = sectionGroup[0]
+
             // Check for conflicts with current routine
             let hasConflict = false
             for (const existingSection of current) {
-              if (hasTimeConflict(section, existingSection)) {
+              if (hasTimeConflict(representativeSection, existingSection)) {
                 hasConflict = true
                 break
               }
             }
 
             if (!hasConflict) {
-              current.push(section)
+              current.push(representativeSection)
               // Check if the current combination has acceptable gaps
               if (hasAcceptableGaps(current)) {
                 generateCombinations(index + 1, current)

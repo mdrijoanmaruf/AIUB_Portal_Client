@@ -4,10 +4,10 @@ import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { FiArrowLeft, FiDownload, FiTrash2, FiBook, FiCalendar } from 'react-icons/fi'
-import RoutineCard from './RoutineCard'
 import RoutineSkeleton from '../skeletons/RoutineSkeleton'
 import Swal from 'sweetalert2'
-import html2canvas from 'html2canvas'
+import { toPng } from 'html-to-image'
+import GeneratedRoutineDesign from '../auto-course/GeneratedRoutineDesign'
 
 interface CourseSection {
   _id: string
@@ -196,76 +196,87 @@ const MyRoutineContainer: React.FC = () => {
     setIsDownloading(true)
     
     try {
-      const routineElement = document.getElementById('routine-download-area')
-      if (!routineElement) {
-        throw new Error('Routine element not found')
+      // Use the same grid element that's displayed to the user
+      const source = document.getElementById('routine-grid-0')
+      if (!source) {
+        throw new Error('Routine grid element not found')
       }
 
-      // Generate canvas from the routine element
-      const canvas = await html2canvas(routineElement, {
+      // Create an offscreen (invisible) clone so the user doesn't see layout changes
+      const offscreenWrapper = document.createElement('div')
+      offscreenWrapper.id = 'offscreen-routine-wrapper-my'
+      offscreenWrapper.style.position = 'fixed'
+      offscreenWrapper.style.left = '0'
+      offscreenWrapper.style.top = '0'
+      offscreenWrapper.style.opacity = '0'
+      offscreenWrapper.style.pointerEvents = 'none'
+      offscreenWrapper.style.zIndex = '-1'
+      offscreenWrapper.style.background = '#ffffff'
+
+      const clone = source.cloneNode(true) as HTMLElement
+      clone.setAttribute('data-downloading', 'true')
+
+      offscreenWrapper.appendChild(clone)
+      document.body.appendChild(offscreenWrapper)
+
+      // Adjust widths inside the clone to ensure consistent export sizing
+      const daySlots = clone.querySelectorAll('.rbc-day-slot')
+      const headers = clone.querySelectorAll('.rbc-header')
+      const timeView = clone.querySelector('.rbc-time-view') as HTMLElement
+      const calendar = clone.querySelector('.rbc-calendar') as HTMLElement
+
+      const forceSizes = (elements: NodeListOf<Element>) => {
+        elements.forEach((el) => {
+          const htmlEl = el as HTMLElement
+          htmlEl.style.setProperty('min-width', '300px', '')
+          htmlEl.style.setProperty('width', '300px', '')
+          htmlEl.style.setProperty('flex', '0 0 300px', '')
+        })
+      }
+
+      forceSizes(daySlots)
+      forceSizes(headers)
+
+      if (timeView) {
+        timeView.style.setProperty('width', 'max-content', '')
+        timeView.style.setProperty('min-width', '100%', '')
+      }
+      if (calendar) {
+        calendar.style.setProperty('width', 'max-content', '')
+      }
+
+      clone.style.setProperty('overflow', 'visible', '')
+      clone.style.setProperty('width', 'max-content', '')
+
+      // Allow layout to settle
+      await new Promise(resolve => setTimeout(resolve, 150))
+
+      const dataUrl = await toPng(clone, {
+        quality: 1.0,
         backgroundColor: '#ffffff',
-        scale: 2, // Higher quality
-        logging: false,
-        useCORS: true,
-        allowTaint: true,
-        ignoreElements: (element) => {
-          // Ignore SVG elements that cause color parsing issues
-          if (element.tagName === 'svg' || element.tagName === 'SVG') {
-            return true
-          }
-          return element.classList?.contains('ignore-screenshot') || false
-        },
-        onclone: (clonedDoc) => {
-          // Remove all SVG elements that might cause issues
-          const svgs = clonedDoc.querySelectorAll('svg')
-          svgs.forEach(svg => svg.remove())
-          
-          // Remove any problematic CSS that uses lab() or other unsupported color functions
-          const styleSheets = clonedDoc.styleSheets
-          for (let i = 0; i < styleSheets.length; i++) {
-            try {
-              const sheet = styleSheets[i] as CSSStyleSheet
-              if (sheet.cssRules) {
-                for (let j = sheet.cssRules.length - 1; j >= 0; j--) {
-                  const rule = sheet.cssRules[j]
-                  if (rule.cssText && (rule.cssText.includes('lab(') || rule.cssText.includes('oklch('))) {
-                    sheet.deleteRule(j)
-                  }
-                }
-              }
-            } catch (e) {
-              // Skip sheets that can't be accessed (CORS)
-              continue
-            }
-          }
-        }
+        pixelRatio: 2,
+        cacheBust: true,
       })
 
-      // Convert canvas to blob and download
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob)
-          const link = document.createElement('a')
-          link.href = url
-          link.download = `my-routine-${new Date().toISOString().split('T')[0]}.png`
-          link.click()
-          URL.revokeObjectURL(url)
+      // Cleanup offscreen clone
+      document.body.removeChild(offscreenWrapper)
 
-          Swal.fire({
-            title: 'Downloaded!',
-            text: 'Your routine has been downloaded as an image.',
-            icon: 'success',
-            timer: 1500,
-            showConfirmButton: false,
-            background: '#ffffff',
-            color: '#1f2937',
-          })
-        }
-        setIsDownloading(false)
-      }, 'image/png')
+      const link = document.createElement('a')
+      link.download = `my-routine-${new Date().toISOString().split('T')[0]}.png`
+      link.href = dataUrl
+      link.click()
+
+      Swal.fire({
+        title: 'Downloaded!',
+        text: 'Your routine has been downloaded as an image.',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false,
+        background: '#ffffff',
+        color: '#1f2937',
+      })
     } catch (error) {
       console.error('Download error:', error)
-      setIsDownloading(false)
       Swal.fire({
         title: 'Error',
         text: 'Failed to download routine. Please try again.',
@@ -273,6 +284,11 @@ const MyRoutineContainer: React.FC = () => {
         background: '#ffffff',
         color: '#1f2937',
       })
+      // Ensure cleanup if something failed
+      const existingWrapper = document.querySelector('#offscreen-routine-wrapper-my')
+      if (existingWrapper) existingWrapper.parentElement?.removeChild(existingWrapper)
+    } finally {
+      setIsDownloading(false)
     }
   }
 
@@ -326,173 +342,46 @@ const MyRoutineContainer: React.FC = () => {
               {selectedSections.length} course{selectedSections.length !== 1 ? 's' : ''} in your routine
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            {selectedSections.length > 0 && (
-              <>
-                <button
-                  onClick={handleDownloadRoutine}
-                  disabled={isDownloading}
-                  className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed rounded-lg transition-colors shadow-md"
-                >
-                  <FiDownload className="h-4 w-4" />
-                  <span className="hidden sm:inline text-sm">
-                    {isDownloading ? 'Downloading...' : 'Download'}
-                  </span>
-                </button>
-                <button
-                  onClick={handleClearAll}
-                  className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors shadow-md"
-                >
-                  <FiTrash2 className="h-4 w-4" />
-                  <span className="hidden sm:inline text-sm">Clear All</span>
-                </button>
-              </>
-            )}
-          </div>
+          {selectedSections.length > 0 && (
+            <>
+              <button
+                onClick={handleDownloadRoutine}
+                disabled={isDownloading}
+                className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed rounded-lg transition-colors shadow-md"
+              >
+                <FiDownload className="h-4 w-4" />
+                <span className="hidden sm:inline text-sm">
+                  {isDownloading ? 'Downloading...' : 'Download'}
+                </span>
+              </button>
+              <button
+                onClick={handleClearAll}
+                className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors shadow-md"
+              >
+                <FiTrash2 className="h-4 w-4" />
+                <span className="hidden sm:inline text-sm">Clear All</span>
+              </button>
+            </>
+          )}
         </div>
 
         {/* Routine Cards or Empty State */}
         {selectedSections.length > 0 ? (
           <>
-            {/* Hidden Download Area - Better Design */}
-            <div id="routine-download-area" style={{ position: 'absolute', left: '-9999px', width: '1200px' }}>
-              <div style={{ 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
-                padding: '40px',
-                fontFamily: 'Arial, sans-serif'
-              }}>
-                {/* Courses Grid */}
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'repeat(2, 1fr)', 
-                  gap: '25px' 
-                }}>
-                  {selectedSections.map((section, index) => (
-                    <div 
-                      key={section._id}
-                      style={{ 
-                        background: 'white',
-                        borderRadius: '15px',
-                        padding: '25px',
-                        boxShadow: '0 5px 15px rgba(0,0,0,0.1)',
-                        border: '3px solid ' + ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a'][index % 5]
-                      }}
-                    >
-                      {/* Course Header */}
-                      <div style={{ marginBottom: '15px' }}>
-                        <div style={{ 
-                          fontSize: '20px', 
-                          fontWeight: 'bold', 
-                          color: '#2d3748',
-                          marginBottom: '8px',
-                          lineHeight: '1.3'
-                        }}>
-                          {section['Course Title']}
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          <div style={{ 
-                            color: ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a'][index % 5],
-                            fontSize: '20px',
-                            fontWeight: 'bold'
-                          }}>
-                            Section: {section.Section}
-                          </div>
-                          {getAlternativeSections(section['Course Title'], section.Section, section.Time).length > 0 && (
-                            <div style={{ 
-                              color: '#2b6cb0',
-                              fontSize: '20px',
-                              fontWeight: '600'
-                            }}>
-                              Alternative sections: {getAlternativeSections(section['Course Title'], section.Section, section.Time).join(', ')}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Class ID */}
-                      <div style={{ 
-                        fontSize: '13px', 
-                        color: '#718096',
-                        marginBottom: '12px',
-                        fontWeight: '500'
-                      }}>
-                        🆔 Class ID: <strong style={{ color: '#4a5568' }}>{section['Class ID']}</strong>
-                      </div>
-
-                      {/* Time Slots */}
-                      <div style={{ 
-                        background: '#f7fafc',
-                        borderRadius: '10px',
-                        padding: '12px'
-                      }}>
-                        {section.Time.map((timeSlot, idx) => (
-                          <div 
-                            key={idx}
-                            style={{ 
-                              background: 'white',
-                              padding: '10px',
-                              borderRadius: '8px',
-                              marginBottom: idx < section.Time.length - 1 ? '8px' : '0',
-                              border: '2px solid #e2e8f0',
-                              fontSize: '13px'
-                            }}
-                          >
-                            <div style={{ 
-                              display: 'flex', 
-                              justifyContent: 'space-between',
-                              marginBottom: '5px'
-                            }}>
-                              <span style={{ 
-                                color: '#667eea',
-                                padding: '4px 10px',
-                                borderRadius: '6px',
-                                fontSize: '12px',
-                                fontWeight: 'bold'
-                              }}>
-                                {timeSlot['Class Type']}
-                              </span>
-                              <span style={{ 
-                                fontWeight: 'bold',
-                                color: '#2d3748'
-                              }}>
-                                📅 {timeSlot.Day}
-                              </span>
-                            </div>
-                            <div style={{ 
-                              color: '#4a5568',
-                              fontWeight: '600',
-                              marginTop: '5px'
-                            }}>
-                              🕐 {timeSlot['Start Time']} - {timeSlot['End Time']}
-                            </div>
-                            <div style={{ 
-                              color: '#718096',
-                              fontSize: '12px',
-                              marginTop: '4px',
-                              fontStyle: 'italic'
-                            }}>
-                              📍 {timeSlot['Class Name']}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
             {/* Visible Routine Display */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              {selectedSections.map(section => (
-                <RoutineCard
-                  key={section._id}
-                  section={section}
-                  alternativeSections={getAlternativeSections(section['Course Title'], section.Section, section.Time)}
-                  onRemove={handleRemoveSection}
-                />
-              ))}
-            </div>
+            <GeneratedRoutineDesign
+              routine={{ sections: selectedSections, conflicts: 0 }}
+              index={0}
+              selectedCourses={Array.from(new Set(selectedSections.map(s => s['Course Title'])))}
+              selectedDays={Array.from(new Set(selectedSections.flatMap(s => s.Time.map(t => t.Day))))}
+              startTime="08:00"
+              endTime="19:00"
+              allSections={allSections}
+              selectedStatuses={[]}
+              minSeats=""
+              onDownload={handleDownloadRoutine}
+              onSave={() => {}}
+            />
           </>
         ) : (
           <div className="bg-white border border-gray-200 rounded-xl p-8 sm:p-12 text-center">

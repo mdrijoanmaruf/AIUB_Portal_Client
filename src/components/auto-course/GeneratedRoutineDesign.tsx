@@ -459,9 +459,6 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
         <div className="text-xs sm:text-xs md:text-xs lg:text-xs xl:text-xs leading-tight" style={{ color: colors.classColor, opacity: 0.95 }}>
           {event.start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - {event.end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
         </div>
-        <div className="text-xs sm:text-xs md:text-xs lg:text-xs xl:text-xs leading-tight" style={{ color: colors.classColor, opacity: 0.95 }}>
-          {event.resource.className}
-        </div>
       </div>
     )
   }
@@ -510,12 +507,6 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
             >
               <FiDownload className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span>Download</span>
-            </button>
-            <button
-              onClick={() => onSave(routine)}
-              className="flex-1 flex items-center justify-center px-3 sm:px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap"
-            >
-              Use This Routine
             </button>
           </div>
         </div>
