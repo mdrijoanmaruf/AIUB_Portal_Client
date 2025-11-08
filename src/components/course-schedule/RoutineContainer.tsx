@@ -522,33 +522,33 @@ const RoutineContainer: React.FC = () => {
               Select sections for your courses
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <button
               onClick={() => {
                 // Save all sections data to localStorage
                 localStorage.setItem('autoGenerateCourseSections', JSON.stringify(courseSections))
                 router.push('/courses/auto')
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors shadow-md"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors shadow-md w-full sm:w-auto"
             >
-              <FiCalendar className="h-4 w-4" />
-              <span>Auto Generate</span>
+              <FiCalendar className="h-4 w-4 shrink-0" />
+              <span className="text-sm sm:text-base">Auto Generate</span>
             </button>
             {selectedSections.length > 0 && (
               <>
                 <button
                   onClick={clearRoutine}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors shadow-md"
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors shadow-md w-full sm:w-auto"
                 >
-                  <FiBook className="h-4 w-4" />
-                  <span>Clear Routine</span>
+                  <FiBook className="h-4 w-4 shrink-0" />
+                  <span className="text-sm sm:text-base">Clear Routine</span>
                 </button>
                 <button
                   onClick={() => router.push('/courses/my-routine')}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors shadow-md"
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors shadow-md w-full sm:w-auto"
                 >
-                  <FiCalendar className="h-4 w-4" />
-                  <span>My Routine ({selectedSections.length})</span>
+                  <FiCalendar className="h-4 w-4 shrink-0" />
+                  <span className="text-sm sm:text-base">My Routine ({selectedSections.length})</span>
                 </button>
               </>
             )}

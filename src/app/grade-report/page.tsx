@@ -478,22 +478,6 @@ export default function GradeReportPage() {
 
               {/* Right: Actions & small stats */}
               <div className="md:col-span-1 flex items-center justify-end gap-4">
-                <div className="text-right">
-                  <p className="text-xs text-gray-500">Last refreshed</p>
-                  <p className="text-sm font-medium text-gray-800">{new Date().toLocaleString()}</p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => fetchGradeReports(true)}
-                    disabled={loading}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                    title="Refresh data"
-                  >
-                    <FaSync className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                    Refresh
-                  </button>
-                </div>
               </div>
             </div>
           </div>
