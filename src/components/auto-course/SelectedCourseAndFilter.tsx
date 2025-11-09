@@ -20,9 +20,23 @@ interface CourseSection {
   updatedAt: string
 }
 
+interface SectionGroup {
+  timeSlotKey: string
+  displayInfo: {
+    days: string[]
+    timeRanges: string[]
+    classTypes: string[]
+  }
+  sections: CourseSection[]
+}
+
+interface GroupedSections {
+  [courseName: string]: SectionGroup[]
+}
+
 interface SelectedCourseAndFilterProps {
   selectedCourses: string[]
-  allSections: CourseSection[]
+  groupedSections: GroupedSections
   isLoadingSections: boolean
   startTime: string
   setStartTime: (time: string) => void
@@ -47,7 +61,7 @@ interface SelectedCourseAndFilterProps {
 
 const SelectedCourseAndFilter: React.FC<SelectedCourseAndFilterProps> = ({
   selectedCourses,
-  allSections,
+  groupedSections,
   isLoadingSections,
   startTime,
   setStartTime,
@@ -86,17 +100,15 @@ const SelectedCourseAndFilter: React.FC<SelectedCourseAndFilterProps> = ({
         ) : selectedCourses.length > 0 ? (
           <div className="space-y-3">
             {selectedCourses.map((course, index) => {
-              // Get section count for this course
+              // Get section count for this course from grouped sections
               const normalizeName = (name: string) =>
                 name.replace(/\s*\[[A-Z0-9]\]\s*$/i, '').trim().toUpperCase()
 
-              const courseSections = allSections.filter(section => {
-                const normalizedCourseTitle = normalizeName(section['Course Title'])
-                const normalizedCourseName = normalizeName(course)
-                return normalizedCourseTitle === normalizedCourseName ||
-                       normalizedCourseTitle.includes(normalizedCourseName) ||
-                       normalizedCourseName.includes(normalizedCourseTitle)
-              })
+              const normalizedCourseName = normalizeName(course)
+              const courseGroups = groupedSections[normalizedCourseName] || []
+              
+              // Count total sections across all groups
+              const totalSections = courseGroups.reduce((sum, group) => sum + group.sections.length, 0)
 
               return (
                 <div
@@ -108,7 +120,7 @@ const SelectedCourseAndFilter: React.FC<SelectedCourseAndFilterProps> = ({
                     <span className="text-xs sm:text-sm font-medium text-gray-900 wrap-break-word">{course}</span>
                   </div>
                   <span className="text-xs text-gray-600 bg-white px-2 sm:px-3 py-1 rounded-full border border-gray-300 self-start sm:self-auto whitespace-nowrap">
-                    {courseSections.length} sections
+                    {totalSections} sections in {courseGroups.length} time slot{courseGroups.length !== 1 ? 's' : ''}
                   </span>
                 </div>
               )

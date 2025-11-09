@@ -82,7 +82,7 @@ const AutoRoutineGenerate = () => {
     <AutoRoutineDataManager>
       {(dataProps) => (
         <AutoRoutineLogic
-          allSections={dataProps.allSections}
+          groupedSections={dataProps.groupedSections}
           selectedCourses={dataProps.selectedCourses}
           startTime={dataProps.startTime}
           endTime={dataProps.endTime}
@@ -106,7 +106,7 @@ const AutoRoutineGenerate = () => {
                 {/* Selected Courses and Filters */}
                 <SelectedCourseAndFilter
                   selectedCourses={dataProps.selectedCourses}
-                  allSections={dataProps.allSections}
+                  groupedSections={dataProps.groupedSections}
                   isLoadingSections={dataProps.isLoadingSections}
                   startTime={dataProps.startTime}
                   setStartTime={dataProps.setStartTime}
@@ -132,7 +132,7 @@ const AutoRoutineGenerate = () => {
                 {/* Generated Routines */}
                 <AutoScheduleMaking
                   selectedCourses={dataProps.selectedCourses}
-                  allSections={dataProps.allSections}
+                  groupedSections={dataProps.groupedSections}
                   startTime={dataProps.startTime}
                   endTime={dataProps.endTime}
                   selectedDays={dataProps.selectedDays}

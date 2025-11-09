@@ -32,6 +32,20 @@ interface Routine {
   conflicts: number
 }
 
+interface SectionGroup {
+  timeSlotKey: string
+  displayInfo: {
+    days: string[]
+    timeRanges: string[]
+    classTypes: string[]
+  }
+  sections: CourseSection[]
+}
+
+interface GroupedSections {
+  [courseName: string]: SectionGroup[]
+}
+
 interface GeneratedRoutineDesignProps {
   routine: Routine
   index: number
@@ -39,7 +53,7 @@ interface GeneratedRoutineDesignProps {
   selectedDays: string[]
   startTime: string
   endTime: string
-  allSections: CourseSection[]
+  groupedSections: GroupedSections
   selectedStatuses: string[]
   minSeats: string
   onDownload: (index: number) => void
@@ -55,7 +69,7 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
   endTime,
   onDownload,
   onSave,
-  allSections,
+  groupedSections,
   selectedStatuses,
   minSeats,
 }) => {
@@ -248,42 +262,60 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
         const endDate = new Date(eventDate)
         endDate.setHours(end.hours, end.minutes, 0, 0)
 
-        // Get all matching sections for this course/time/day
+        // Get all matching sections for this course from grouped sections
         const normalize = (name: string) => name.replace(/\s*\[[A-Z0-9]\]\s*$/i, '').trim().toUpperCase()
         const normTitle = normalize(section['Course Title'])
 
-        const matchingSections = allSections.filter((sec: CourseSection) => {
-          const secTitle = normalize(sec['Course Title'])
-          if (secTitle !== normTitle && !secTitle.includes(normTitle) && !normTitle.includes(secTitle)) return false
+        const courseGroups = groupedSections[normTitle] || []
+        let matchingSections: CourseSection[] = []
 
-          if (selectedStatuses.length > 0 && !selectedStatuses.includes(sec.Status)) return false
-
-          if (minSeats) {
-            const availableSeats = parseInt(sec.Capacity) - parseInt(sec.Count)
-            const minSeatsValue = minSeats === '30+' ? 30 : parseInt(minSeats)
-            if (availableSeats < minSeatsValue) return false
-          }
-
-          const dayNorm = normalizeDay(timeSlot.Day)
-          const selStart = timeToMinutes(timeSlot['Start Time'])
-          const selEnd = timeToMinutes(timeSlot['End Time'])
-
-          // Check if ALL time slots match exactly (same day, same start, same end)
-          if (sec.Time.length !== section.Time.length) return false
-
-          // Create a set of time slot signatures for the current section
-          const sectionTimeSlots = new Set(
-            section.Time.map(t => 
-              `${normalizeDay(t.Day)}|${timeToMinutes(t['Start Time'])}|${timeToMinutes(t['End Time'])}`
-            )
-          )
-
-          // Check if all time slots in sec match the section's time slots
-          return sec.Time.every((t: any) => {
-            const timeSlotKey = `${normalizeDay(t.Day)}|${timeToMinutes(t['Start Time'])}|${timeToMinutes(t['End Time'])}`
-            return sectionTimeSlots.has(timeSlotKey)
-          })
+        // Extract days and time ranges from the current section
+        const sectionDays = new Set<string>()
+        const sectionTimeRanges = new Set<string>()
+        
+        section.Time.forEach(t => {
+          sectionDays.add(normalizeDay(t.Day))
+          const startMin = timeToMinutes(t['Start Time'])
+          const endMin = timeToMinutes(t['End Time'])
+          sectionTimeRanges.add(`${startMin}-${endMin}`)
         })
+
+        // Find the group that matches this section's days and time ranges
+        for (const group of courseGroups) {
+          const groupSection = group.sections[0]
+          const groupDays = new Set<string>()
+          const groupTimeRanges = new Set<string>()
+          
+          groupSection.Time.forEach(t => {
+            groupDays.add(normalizeDay(t.Day))
+            const startMin = timeToMinutes(t['Start Time'])
+            const endMin = timeToMinutes(t['End Time'])
+            groupTimeRanges.add(`${startMin}-${endMin}`)
+          })
+
+          // Check if days and time ranges match
+          const daysMatch = sectionDays.size === groupDays.size &&
+                           Array.from(sectionDays).every(d => groupDays.has(d))
+          
+          const timesMatch = sectionTimeRanges.size === groupTimeRanges.size &&
+                            Array.from(sectionTimeRanges).every(t => groupTimeRanges.has(t))
+
+          if (daysMatch && timesMatch) {
+            // Filter sections by status and minSeats
+            matchingSections = group.sections.filter((sec: CourseSection) => {
+              if (selectedStatuses.length > 0 && !selectedStatuses.includes(sec.Status)) return false
+
+              if (minSeats) {
+                const availableSeats = parseInt(sec.Capacity) - parseInt(sec.Count)
+                const minSeatsValue = minSeats === '30+' ? 30 : parseInt(minSeats)
+                if (availableSeats < minSeatsValue) return false
+              }
+
+              return true
+            })
+            break
+          }
+        }
 
         const sectionList = matchingSections.map((s: CourseSection) => {
           const count = parseInt(s.Count)
@@ -306,7 +338,7 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
     })
 
     return events
-  }, [routine, allSections, selectedStatuses, minSeats])
+  }, [routine, groupedSections, selectedStatuses, minSeats])
 
   // Custom event style getter with professional color combinations
   const eventStyleGetter = (event: any) => {

@@ -234,6 +234,103 @@ const RoutineContainer: React.FC = () => {
     return hours * 60 + minutes
   }
 
+  // Prepare grouped sections data for auto generation
+  const prepareAutoGenerationData = (sections: CourseSection[]) => {
+    // Normalize course name
+    const normalizeName = (name: string) => 
+      name.replace(/\s*\[[A-Z0-9]\]\s*$/i, '').trim().toUpperCase()
+
+    // Group sections by course
+    const sectionsByCourse = new Map<string, CourseSection[]>()
+    
+    sections.forEach(section => {
+      const courseName = normalizeName(section['Course Title'])
+      if (!sectionsByCourse.has(courseName)) {
+        sectionsByCourse.set(courseName, [])
+      }
+      sectionsByCourse.get(courseName)?.push(section)
+    })
+
+    // For each course, group sections by unique time slots
+    const groupedByCourse: Record<string, {
+      timeSlotKey: string
+      displayInfo: {
+        days: string[]
+        timeRanges: string[]
+        classTypes: string[]
+      }
+      sections: CourseSection[]
+    }[]> = {}
+
+    sectionsByCourse.forEach((courseSections, courseName) => {
+      const timeSlotGroups = new Map<string, CourseSection[]>()
+
+      courseSections.forEach(section => {
+        // Group sections by their unique days and overall time pattern
+        // This matches the routine filter behavior where sections with same days are grouped
+        
+        // Extract unique days
+        const days = new Set<string>()
+        section.Time.forEach(t => days.add(t.Day))
+        
+        // Sort days consistently
+        const dayOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+        const sortedDays = Array.from(days).sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b))
+        
+        // Extract unique time ranges (convert to minutes for consistency)
+        const convertToMinutes = (time: string): number => {
+          const [timePart, period] = time.split(' ')
+          let [hours, minutes] = timePart.split(':').map(Number)
+          if (period === 'PM' && hours !== 12) hours += 12
+          if (period === 'AM' && hours === 12) hours = 0
+          return hours * 60 + minutes
+        }
+        
+        const timeRanges = new Set<string>()
+        section.Time.forEach(t => {
+          const startMin = convertToMinutes(t['Start Time'])
+          const endMin = convertToMinutes(t['End Time'])
+          timeRanges.add(`${startMin}-${endMin}`)
+        })
+        const sortedTimeRanges = Array.from(timeRanges).sort()
+        
+        // Create grouping key: days + time ranges (ignoring which day has which time)
+        const timeKey = `${sortedDays.join(',')}|${sortedTimeRanges.join(',')}`
+
+        if (!timeSlotGroups.has(timeKey)) {
+          timeSlotGroups.set(timeKey, [])
+        }
+        timeSlotGroups.get(timeKey)?.push(section)
+      })
+
+      // Convert to array with display info
+      const groups = Array.from(timeSlotGroups.entries()).map(([timeKey, sections]) => {
+        // Get unique days, time ranges, and class types from the first section
+        const firstSection = sections[0]
+        const days = [...new Set(firstSection.Time.map(t => t.Day))]
+        const timeRanges = [...new Set(firstSection.Time.map(t => `${t['Start Time']} - ${t['End Time']}`))]
+        const classTypes = [...new Set(firstSection.Time.map(t => t['Class Type']))]
+
+        return {
+          timeSlotKey: timeKey,
+          displayInfo: {
+            days: days.sort((a, b) => {
+              const dayOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+              return dayOrder.indexOf(a) - dayOrder.indexOf(b)
+            }),
+            timeRanges,
+            classTypes: classTypes.sort()
+          },
+          sections
+        }
+      })
+
+      groupedByCourse[courseName] = groups
+    })
+
+    return groupedByCourse
+  }
+
   const applyFilters = () => {
     let filtered = [...courseSections]
 
@@ -525,8 +622,9 @@ const RoutineContainer: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <button
               onClick={() => {
-                // Save all sections data to localStorage
-                localStorage.setItem('autoGenerateCourseSections', JSON.stringify(courseSections))
+                // Group sections by time slots before navigating
+                const groupedData = prepareAutoGenerationData(courseSections)
+                localStorage.setItem('autoGenerateGroupedSections', JSON.stringify(groupedData))
                 router.push('/courses/auto')
               }}
               className="flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors shadow-md w-full sm:w-auto"

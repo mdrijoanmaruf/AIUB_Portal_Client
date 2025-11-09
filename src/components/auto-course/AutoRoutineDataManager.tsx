@@ -19,6 +19,20 @@ interface CourseSection {
   updatedAt: string
 }
 
+interface SectionGroup {
+  timeSlotKey: string
+  displayInfo: {
+    days: string[]
+    timeRanges: string[]
+    classTypes: string[]
+  }
+  sections: CourseSection[]
+}
+
+interface GroupedSections {
+  [courseName: string]: SectionGroup[]
+}
+
 interface Routine {
   sections: CourseSection[]
   conflicts: number
@@ -36,7 +50,7 @@ interface AutoRoutineDataManagerProps {
     maxGap: string
     isGenerating: boolean
     generatedRoutines: Routine[]
-    allSections: CourseSection[]
+    groupedSections: GroupedSections
     isLoadingSections: boolean
 
     // State setters
@@ -80,7 +94,7 @@ const AutoRoutineDataManager: React.FC<AutoRoutineDataManagerProps> = ({ childre
   const [maxGap, setMaxGap] = useState<string>('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedRoutines, setGeneratedRoutines] = useState<Routine[]>([])
-  const [allSections, setAllSections] = useState<CourseSection[]>([])
+  const [groupedSections, setGroupedSections] = useState<GroupedSections>({})
   const [isLoadingSections, setIsLoadingSections] = useState(true)
   const [generationSummary, setGenerationSummary] = useState<{
     totalPossible: number
@@ -103,67 +117,21 @@ const AutoRoutineDataManager: React.FC<AutoRoutineDataManagerProps> = ({ childre
       }
     }
 
-    // Load all course sections from localStorage
-    const storedSections = localStorage.getItem('autoGenerateCourseSections')
-    if (storedSections) {
+    // Load pre-grouped sections from localStorage
+    const storedGroupedSections = localStorage.getItem('autoGenerateGroupedSections')
+    if (storedGroupedSections) {
       try {
-        const parsedSections = JSON.parse(storedSections)
-        if (Array.isArray(parsedSections)) {
-          setAllSections(parsedSections)
-          setIsLoadingSections(false)
-          return
-        }
+        const parsedGrouped = JSON.parse(storedGroupedSections)
+        setGroupedSections(parsedGrouped)
+        setIsLoadingSections(false)
       } catch (error) {
-        console.error('Error parsing stored sections:', error)
+        console.error('Error parsing grouped sections:', error)
+        setIsLoadingSections(false)
       }
-    }
-
-    // Fallback: fetch from API if not in localStorage
-    fetchCourseSections()
-  }, [])
-
-  const fetchCourseSections = async () => {
-    try {
-      setIsLoadingSections(true)
-      const cachedData = localStorage.getItem('allCourseSections')
-      let allCoursesData: CourseSection[] = []
-
-      if (cachedData) {
-        allCoursesData = JSON.parse(cachedData)
-      } else {
-        const response = await fetch('https://aiub-course-kappa.vercel.app/api/courses')
-        const result = await response.json()
-        if (result.success && Array.isArray(result.data)) {
-          allCoursesData = result.data
-        }
-      }
-
-      // Normalize and filter sections
-      const normalizeName = (name: string) =>
-        name.replace(/\s*\[[A-Z0-9]\]\s*$/i, '').trim().toUpperCase()
-
-      const storedCourses = localStorage.getItem('selectedCourses')
-      if (storedCourses) {
-        const courseNames = JSON.parse(storedCourses)
-
-        const filteredSections = allCoursesData.filter((course: CourseSection) => {
-          const normalizedCourseTitle = normalizeName(course['Course Title'])
-          return courseNames.some((selectedName: string) => {
-            const normalizedSelectedName = normalizeName(selectedName)
-            return normalizedCourseTitle === normalizedSelectedName ||
-                   normalizedCourseTitle.includes(normalizedSelectedName) ||
-                   normalizedSelectedName.includes(normalizedCourseTitle)
-          })
-        })
-
-        setAllSections(filteredSections)
-      }
-    } catch (error) {
-      console.error('Error fetching course sections:', error)
-    } finally {
+    } else {
       setIsLoadingSections(false)
     }
-  }
+  }, [])
 
   const toggleDay = (day: string) => {
     setSelectedDays(prev =>
@@ -181,13 +149,17 @@ const AutoRoutineDataManager: React.FC<AutoRoutineDataManagerProps> = ({ childre
     )
   }
 
-  // Get unique status values from loaded sections
+  // Get unique status values from grouped sections
   const getAvailableStatuses = (): string[] => {
     const statuses = new Set<string>()
-    allSections.forEach(section => {
-      if (section.Status) {
-        statuses.add(section.Status)
-      }
+    Object.values(groupedSections).forEach(groups => {
+      groups.forEach(group => {
+        group.sections.forEach(section => {
+          if (section.Status) {
+            statuses.add(section.Status)
+          }
+        })
+      })
     })
     return Array.from(statuses).sort()
   }
@@ -205,7 +177,7 @@ const AutoRoutineDataManager: React.FC<AutoRoutineDataManagerProps> = ({ childre
         maxGap,
         isGenerating,
         generatedRoutines,
-        allSections,
+        groupedSections,
         isLoadingSections,
 
         // State setters
@@ -217,8 +189,8 @@ const AutoRoutineDataManager: React.FC<AutoRoutineDataManagerProps> = ({ childre
         setMaxGap,
         setIsGenerating,
         setGeneratedRoutines,
-  generationSummary,
-  setGenerationSummary,
+        generationSummary,
+        setGenerationSummary,
 
         // Actions
         toggleDay,

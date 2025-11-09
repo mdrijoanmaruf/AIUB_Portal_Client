@@ -22,6 +22,20 @@ interface CourseSection {
   updatedAt: string
 }
 
+interface SectionGroup {
+  timeSlotKey: string
+  displayInfo: {
+    days: string[]
+    timeRanges: string[]
+    classTypes: string[]
+  }
+  sections: CourseSection[]
+}
+
+interface GroupedSections {
+  [courseName: string]: SectionGroup[]
+}
+
 interface Routine {
   sections: CourseSection[]
   conflicts: number
@@ -29,7 +43,7 @@ interface Routine {
 
 interface AutoScheduleMakingProps {
   selectedCourses: string[]
-  allSections: CourseSection[]
+  groupedSections: GroupedSections
   startTime: string
   endTime: string
   selectedDays: string[]
@@ -56,7 +70,7 @@ interface AutoScheduleMakingProps {
 
 const AutoScheduleMaking: React.FC<AutoScheduleMakingProps> = ({
   selectedCourses,
-  allSections,
+  groupedSections,
   startTime,
   endTime,
   selectedDays,
@@ -219,7 +233,7 @@ const AutoScheduleMaking: React.FC<AutoScheduleMakingProps> = ({
                 selectedDays={selectedDays}
                 startTime={startTime}
                 endTime={endTime}
-                allSections={allSections}
+                groupedSections={groupedSections}
                 selectedStatuses={selectedStatuses}
                 minSeats={minSeats}
                 onDownload={downloadRoutineImage}
@@ -231,7 +245,7 @@ const AutoScheduleMaking: React.FC<AutoScheduleMakingProps> = ({
       )}
 
       {/* No Routines Found - provide clearer explanation when combinations existed */}
-      {!isGenerating && generatedRoutines.length === 0 && allSections.length > 0 && generationSummary && generationSummary.totalPossible > 0 && (
+      {!isGenerating && generatedRoutines.length === 0 && Object.keys(groupedSections).length > 0 && generationSummary && generationSummary.totalPossible > 0 && (
         <div className="bg-white border border-gray-200 rounded-xl p-6 sm:p-8 shadow-sm text-center">
           <FiCalendar className="h-12 w-12 sm:h-16 sm:w-16 text-orange-400 mx-auto mb-3 sm:mb-4" />
           <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
@@ -266,7 +280,7 @@ const AutoScheduleMaking: React.FC<AutoScheduleMakingProps> = ({
       )}
 
       {/* Generic No Routines Found (no sections loaded or no possible combinations) */}
-      {!isGenerating && generatedRoutines.length === 0 && allSections.length > 0 && (!generationSummary || generationSummary.totalPossible === 0) && (
+      {!isGenerating && generatedRoutines.length === 0 && Object.keys(groupedSections).length > 0 && (!generationSummary || generationSummary.totalPossible === 0) && (
         <div className="bg-white border border-gray-200 rounded-xl p-6 sm:p-8 shadow-sm text-center">
           <FiCalendar className="h-12 w-12 sm:h-16 sm:w-16 text-orange-400 mx-auto mb-3 sm:mb-4" />
           <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
@@ -314,7 +328,7 @@ const AutoScheduleMaking: React.FC<AutoScheduleMakingProps> = ({
       )}
 
       {/* Initial state - before generation */}
-      {!isGenerating && generatedRoutines.length === 0 && allSections.length === 0 && (
+      {!isGenerating && generatedRoutines.length === 0 && Object.keys(groupedSections).length === 0 && (
         <div className="bg-white border border-gray-200 rounded-xl p-6 sm:p-8 shadow-sm text-center">
           <FiCalendar className="h-12 w-12 sm:h-16 sm:w-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
           <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
