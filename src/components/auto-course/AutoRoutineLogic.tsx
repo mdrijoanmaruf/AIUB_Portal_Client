@@ -409,6 +409,30 @@ const AutoRoutineLogic: React.FC<AutoRoutineLogicProps> = ({
           })
 
           setGeneratedRoutines(routines)
+
+          // Show SweetAlert if no routines were generated
+          if (routines.length === 0) {
+            const perCourseList = Object.entries(perCourseCounts)
+              .map(([course, count]) => `<li>${course}: ${count} sections</li>`)
+              .join('')
+
+            await Swal.fire({
+              icon: 'warning',
+              title: 'No Complete Routines Found',
+              html: `
+                <p>We estimated approximately <strong>${totalPossible.toLocaleString()}</strong> possible combinations, but none of the complete schedules passed your conflict and gap rules.</p>
+                <div style="text-align: left; margin-top: 16px;">
+                  <p style="font-weight: 600; margin-bottom: 8px;">Available sections per course (after applying your filters):</p>
+                  <ul style="margin-left: 20px; margin-bottom: 12px;">
+                    ${perCourseList}
+                  </ul>
+                  <p style="margin-top: 12px;">Try relaxing your filters (wider time range, more days selected, increase maximum gap, or lower minimum seats) to allow complete routines.</p>
+                </div>
+              `,
+              confirmButtonText: 'OK',
+              confirmButtonColor: '#9333ea'
+            })
+          }
         } catch (error) {
           console.error('Error generating routines:', error)
         } finally {

@@ -1,5 +1,5 @@
 import React from 'react'
-import { FiBook, FiClock, FiZap } from 'react-icons/fi'
+import { FiBook, FiClock, FiZap, FiRotateCcw } from 'react-icons/fi'
 
 interface CourseSection {
   _id: string
@@ -83,6 +83,31 @@ const SelectedCourseAndFilter: React.FC<SelectedCourseAndFilterProps> = ({
   MIN_SEAT_OPTIONS,
   MAX_GAP_OPTIONS
 }) => {
+  const resetFilters = () => {
+    setStartTime('08:00')
+    setEndTime('19:00')
+    // Reset to default days: Sunday, Monday, Tuesday, Wednesday
+    const defaultDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday']
+    defaultDays.forEach(day => {
+      if (!selectedDays.includes(day)) {
+        toggleDay(day)
+      }
+    })
+    // Deselect days not in default
+    selectedDays.forEach(day => {
+      if (!defaultDays.includes(day)) {
+        toggleDay(day)
+      }
+    })
+    // Reset status to Open only
+    selectedStatuses.forEach(status => toggleStatus(status))
+    if (!selectedStatuses.includes('Open')) {
+      toggleStatus('Open')
+    }
+    setMinSeats('')
+    setMaxGap('')
+  }
+
   return (
     <>
       {/* Selected Courses Display */}
@@ -137,10 +162,19 @@ const SelectedCourseAndFilter: React.FC<SelectedCourseAndFilterProps> = ({
 
       {/* Filter Form */}
       <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-sm">
-        <h2 className="text-base sm:text-lg md:text-xl font-semibold mb-4 sm:mb-6 flex items-center gap-2 text-gray-800">
-          <FiClock className="text-purple-600 h-4 w-4 sm:h-5 sm:w-5" />
-          <span>Preferences & Filters</span>
-        </h2>
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <h2 className="text-base sm:text-lg md:text-xl font-semibold flex items-center gap-2 text-gray-800">
+            <FiClock className="text-purple-600 h-4 w-4 sm:h-5 sm:w-5" />
+            <span>Preferences & Filters</span>
+          </h2>
+          <button
+            onClick={resetFilters}
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg text-xs sm:text-sm font-medium transition-colors"
+          >
+            <FiRotateCcw className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span>Reset</span>
+          </button>
+        </div>
 
         <div className="space-y-4 sm:space-y-6">
           {/* Time Range */}

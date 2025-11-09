@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { FiDownload } from 'react-icons/fi'
+import { FiDownload, FiSave } from 'react-icons/fi'
 import { useRouter } from 'next/navigation'
 import { toPng } from 'html-to-image'
 import { Calendar, momentLocalizer, View } from 'react-big-calendar'
@@ -542,7 +542,20 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
             </p>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap w-full sm:w-auto">
-            {/* Download button hidden - handled by parent container */}
+            <button
+              onClick={() => onDownload(index)}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-xs sm:text-sm font-medium transition-colors"
+            >
+              <FiDownload className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span>Download</span>
+            </button>
+            <button
+              onClick={() => onSave(routine)}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg text-xs sm:text-sm font-medium transition-colors"
+            >
+              <FiSave className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span>Save Routine</span>
+            </button>
           </div>
         </div>
       </div>
@@ -665,6 +678,7 @@ const GeneratedRoutineDesign: React.FC<GeneratedRoutineDesignProps> = ({
             #routine-grid-${index}[data-downloading="true"] .rbc-header {
               padding: 4px 3px !important;
               font-size: 0.65rem !important;
+              color: #4b5563 !important;
             }
 
             #routine-grid-${index}[data-downloading="true"] .rbc-label {
