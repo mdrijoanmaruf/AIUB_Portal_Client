@@ -1,36 +1,126 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AIUB Portal Client
+
+A modern web client for American International University-Bangladesh (AIUB) student portal. Access grades, course schedules, registration info, and financial records with an enhanced UI.
+
+## Features
+
+### Authentication
+- Secure login with CAPTCHA verification
+- Session management with auto-logout
+
+### Dashboard
+- Student information overview
+- Today's class schedule with live countdown timers
+- Quick navigation to all portal sections
+
+### Grade Report
+- Semester-wise grade breakdown
+- CGPA calculation and tracking
+- Visual analytics with charts (Line, Bar, Pie, Radar charts)
+- Grade trend analysis
+- Export grade report as image
+
+### Course Schedule Planner
+- Browse all available courses
+- Search and filter courses
+- View course sections with time slots
+- Build custom routines by selecting sections
+
+### Auto Routine Generator
+- Automatically generate conflict-free schedules
+- Filter by preferred days and time slots
+- Set minimum seat availability requirements
+- Configure maximum gap between classes
+
+### Registration Info
+- View current semester registration details
+- Course enrollment status
+- Credit breakdown and fee information
+
+### Finance
+- Transaction history (debits/credits)
+- Filter and search transactions
+- Financial summary with balance tracking
+
+### My Routine
+- View selected course schedule
+- Calendar view for weekly routine
+
+## Tech Stack
+
+- **Framework:** Next.js 16
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS 4
+- **UI/Animations:** Framer Motion
+- **Charts:** Recharts
+- **Calendar:** React Big Calendar
+- **Icons:** React Icons
+- **Alerts:** SweetAlert2
+- **Image Export:** html-to-image, html2canvas
+- **Date Handling:** Moment.js
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+
+- npm/yarn/pnpm
+
+### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/mdrijoanmaruf/AIUB_Portal_Client.git
+cd AIUB_Portal_Client
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+# Create .env.local and add:
+NEXT_PUBLIC_API_BASE_URL=<your-api-url>
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/                    # Next.js App Router pages
+│   ├── course-routine/     # Course routine pages
+│   ├── courses/            # Course planner & auto-generator
+│   ├── finance/            # Financial records
+│   ├── grade-report/       # Grade report & analytics
+│   ├── home/               # Dashboard
+│   ├── profile/            # User profile
+│   └── registration/       # Registration info
+├── components/             # Reusable components
+│   ├── auto-course/        # Auto routine generator components
+│   ├── course-schedule/    # Course scheduling components
+│   ├── Footer/
+│   ├── Navbar/
+│   └── skeletons/          # Loading skeletons
+└── lib/                    # Utilities & helpers
+    ├── cacheManager.ts     # Client-side caching
+    ├── courseCache.ts      # Course data caching
+    ├── courseUtils.ts      # Course helper functions
+    └── prefetch.ts         # Data prefetching
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Repository
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+[GitHub - AIUB Portal Client](https://github.com/mdrijoanmaruf/AIUB_Portal_Client)
 
-## Deploy on Vercel
+## Author
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Md Rijoan Maruf** - [rijoan.com](https://rijoan.com)
